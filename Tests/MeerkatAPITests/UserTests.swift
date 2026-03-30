@@ -34,10 +34,10 @@ import Foundation
         #expect(user.id == 1)
         #expect(user.username == "leo")
         #expect(user.email == "leo@example.com")
-        #expect(user.language == "en")
-        #expect(user.date_format == "eu")
-        #expect(user.is_admin == true)
-        #expect(user.created_at.timeIntervalSince1970 == 1774738368)
-        #expect(user.updated_at?.timeIntervalSince1970 == 1774740185)
+        #expect(user.language == .en)
+        #expect(user.dateFormat == .eu)
+        #expect(user.isAdmin == true)
+        #expect(user.createdAt.timeIntervalSince1970 == 1774738368)
+        #expect(user.updatedAt?.timeIntervalSince1970 == 1774740185)
     }
 }

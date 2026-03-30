@@ -79,7 +79,6 @@ extension ApiHandler {
     
     /**
      Create a new user account
-     
      - Parameter username:      minimum 3 characters
      - Parameter mailAddress:
      - Parameter password:      minimum 8 characters, can be tested beforehand using `checkPasswordStrength(String)`
@@ -169,14 +168,66 @@ extension ApiHandler {
     public func getMe() async throws -> User {
         return try await self.get(from: .me)
     }
-    /// Change password (POST)
-    //case changePassword
-    /// Update UI language preference (PATCH)
-    //case language
-    /// Update date format preference (PATCH)
-    //case dateFormat
-    /// Get custom field names (GET/PATCH)
-    //case customFields
+    /**
+     Change password
+     - Parameter currentPassword: Current password of the user
+     - Parameter newPassword: New password for the user
+     */
+    public func changePassword(currentPassword: String, newPassword: String) async throws {
+        let passDict = [
+            "current_password": currentPassword,
+            "new_password": newPassword
+        ]
+        
+        let _ = try await self.sendRequest(to: .changePassword, method: .POST, body: self.jsonEncoder.encode(passDict))
+    }
+    
+    /**
+     Update UI language preference (WebUI only!)
+     - Parameter newLanguage: New language to use
+     */
+    public func changeLanguage(newLanguage: InterfaceLanguage) async throws {
+        let bodyDict = [
+            "language": newLanguage.rawValue
+        ]
+        
+        let _ = try await self.sendRequest(to: .language, method: .PATCH, body: self.jsonEncoder.encode(bodyDict))
+    }
+    
+    /**
+     Update date format preference (WebUI only!)
+     - Parameter newFormat: New date format to use
+     */
+    public func changeDateFormat(newFormat: DateFormat) async throws {
+        let bodyDict = [
+            "date_format": newFormat.rawValue
+        ]
+        
+        let _ = try await self.sendRequest(to: .dateFormat, method: .PATCH, body: self.jsonEncoder.encode(bodyDict))
+    }
+    
+    /**
+     Get custom field names
+     
+     - Returns: CustomFields object containing all custom field names
+     */
+    public func getCustomFields() async throws -> CustomFields {
+        let data = try await self.sendRequest(to: .customFields)
+        
+        return try self.jsonDecoder.decode(CustomFields.self, from: data)
+    }
+    
+    /**
+     Update custom field names
+     - Parameter newFields: CustomFields object with the names of **all custom fields**, including those to be created
+     
+     - Returns: CustomFields object containing all custom field names
+     */
+    public func updateCustomFields(newFields: CustomFields) async throws -> CustomFields {
+        let data = try await self.sendRequest(to: .customFields, method: .PATCH, body: self.jsonEncoder.encode(newFields))
+        
+        return try self.jsonDecoder.decode(CustomFields.self, from: data)
+    }
     
     // MARK: Contacts
     /// List contacts (GET/POST)

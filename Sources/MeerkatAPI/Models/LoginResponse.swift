@@ -8,6 +8,6 @@
 import Foundation
 
 public struct LoginResponse: Decodable {
-    public let date_format: String
+    public let date_format: DateFormat
     public let language: InterfaceLanguage
 }

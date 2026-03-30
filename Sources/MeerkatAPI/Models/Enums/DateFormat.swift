@@ -1,22 +1,25 @@
 //
-//  MeerkatLanguage.swift
+//  DateFormat.swift
 //  MeerkatAPI
 //
 //  Created by Leo Wehrfritz on 30.03.26.
 //
 
-public enum InterfaceLanguage: Decodable, Equatable, Hashable {
+import Foundation
+
+
+public enum DateFormat: Codable, Equatable, Hashable {
     
-    case en
-    case de
+    case eu
+    case us
     case unknown(langcode: String)
     
     public var rawValue: String {
         switch self {
-        case .en:
-            "en"
-        case .de:
-            "de"
+        case .eu:
+            "eu"
+        case .us:
+            "us"
         case .unknown(let langcode):
             langcode
         }
@@ -24,10 +27,10 @@ public enum InterfaceLanguage: Decodable, Equatable, Hashable {
     
     public init(rawValue: String) {
         switch rawValue {
-        case "en":
-            self = .en
-        case "de":
-            self = .de
+        case "eu":
+            self = .eu
+        case "us":
+            self = .us
         default:
             self = .unknown(langcode: rawValue)
         }
@@ -37,4 +40,10 @@ public enum InterfaceLanguage: Decodable, Equatable, Hashable {
         let container = try decoder.singleValueContainer()
         self.init(rawValue: try container.decode(String.self))
     }
+    
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.rawValue)
+    }
 }
+

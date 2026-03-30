@@ -22,7 +22,7 @@ import Foundation
         
         let response = try JSONDecoder().decode(LoginResponse.self, from: jsonData)
         
-        #expect(response.date_format == "eu")
+        #expect(response.date_format == .eu)
         #expect(response.language == .en)
     }
 }
