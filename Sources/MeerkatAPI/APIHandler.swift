@@ -116,7 +116,7 @@ extension ApiHandler {
      Clear current session cookie
      */
     public func logout() async throws {
-        let data = try await self.sendRequest(to: .logout, method: .POST)
+        let _ = try await self.sendRequest(to: .logout, method: .POST)
     }
     
     /**
