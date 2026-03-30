@@ -9,18 +9,20 @@ import Testing
 import Foundation
 @testable import MeerkatAPI
 
-@Test func testDecodeLoginResponse() throws {
-    let json = """
+@Suite struct LoginResponseTests {
+    @Test func testDecodeLoginResponse() throws {
+        let json = """
     {
         "date_format": "eu",
         "language": "en"
     }
     """
-    
-    let jsonData = Data(json.utf8)
-    
-    let response = try JSONDecoder().decode(LoginResponse.self, from: jsonData)
-    
-    #expect(response.date_format == "eu")
-    #expect(response.language == .en)
+        
+        let jsonData = Data(json.utf8)
+        
+        let response = try JSONDecoder().decode(LoginResponse.self, from: jsonData)
+        
+        #expect(response.date_format == "eu")
+        #expect(response.language == .en)
+    }
 }

@@ -9,8 +9,9 @@ import Testing
 import Foundation
 @testable import MeerkatAPI
 
-@Test func testDecodeActivitiesResponse() throws {
-    let json = """
+@Suite struct PaginatedResponseTests {
+    @Test func testDecodeActivitiesResponse() throws {
+        let json = """
     {
         "activities": [
             {
@@ -29,33 +30,33 @@ import Foundation
         "total": 1
     }
     """
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let response = try decoder.decode(PaginatedResponse<Activity>.self, from: jsonData)
+        
+        let firstActivity = response.results.first
+        
+        #expect(firstActivity?.id == 1)
+        #expect(firstActivity?.createdAt.timeIntervalSince1970 == 1774739542)
+        #expect(firstActivity?.updatedAt?.timeIntervalSince1970 == 1774740045)
+        #expect(firstActivity?.deletedAt == nil)
+        #expect(firstActivity?.title == "Fighting Daleks")
+        #expect(firstActivity?.description == "Exterminate!!!")
+        #expect(firstActivity?.location == "Skaro")
+        #expect(firstActivity?.date == Date(timeIntervalSince1970: 3226435200))
+        
+        #expect(response.limit == 25)
+        #expect(response.page == 1)
+        #expect(response.total == 1)
+        #expect(response.totalPages == nil)
+    }
     
-    let jsonData = Data(json.utf8)
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    let response = try decoder.decode(PaginatedResponse<Activity>.self, from: jsonData)
-    
-    let firstActivity = response.results.first
-    
-    #expect(firstActivity?.id == 1)
-    #expect(firstActivity?.createdAt.timeIntervalSince1970 == 1774739542)
-    #expect(firstActivity?.updatedAt?.timeIntervalSince1970 == 1774740045)
-    #expect(firstActivity?.deletedAt == nil)
-    #expect(firstActivity?.title == "Fighting Daleks")
-    #expect(firstActivity?.description == "Exterminate!!!")
-    #expect(firstActivity?.location == "Skaro")
-    #expect(firstActivity?.date == Date(timeIntervalSince1970: 3226435200))
-    
-    #expect(response.limit == 25)
-    #expect(response.page == 1)
-    #expect(response.total == 1)
-    #expect(response.totalPages == nil)
-}
-
-@Test func testDecodeBirthdays() throws {
-    let json = """
+    @Test func testDecodeBirthdays() throws {
+        let json = """
     {
         "birthdays": [
             {
@@ -67,26 +68,26 @@ import Foundation
         ]
     }
     """
+        
+        let jsonData = Data(json.utf8)
+        
+        let response = try JSONDecoder().decode(PaginatedResponse<Birthday>.self, from: jsonData)
+        
+        let firstBirthday = response.results.first
+        
+        #expect(firstBirthday?.type == .contact)
+        #expect(firstBirthday?.name == "Matt Smith")
+        #expect(firstBirthday?.birthday == "1982-10-28")
+        #expect(firstBirthday?.contactId == 1)
+        
+        #expect(response.limit == nil)
+        #expect(response.page == nil)
+        #expect(response.total == nil)
+        #expect(response.totalPages == nil)
+    }
     
-    let jsonData = Data(json.utf8)
-    
-    let response = try JSONDecoder().decode(PaginatedResponse<Birthday>.self, from: jsonData)
-    
-    let firstBirthday = response.results.first
-    
-    #expect(firstBirthday?.type == .contact)
-    #expect(firstBirthday?.name == "Matt Smith")
-    #expect(firstBirthday?.birthday == "1982-10-28")
-    #expect(firstBirthday?.contactId == 1)
-    
-    #expect(response.limit == nil)
-    #expect(response.page == nil)
-    #expect(response.total == nil)
-    #expect(response.totalPages == nil)
-}
-
-@Test func testDecodeContactsResponse() throws {
-    let json = """
+    @Test func testDecodeContactsResponse() throws {
+        let json = """
         {
             "contacts": [
                 {
@@ -123,47 +124,47 @@ import Foundation
             "total": 1
         }
         """
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let response = try decoder.decode(PaginatedResponse<Contact>.self, from: jsonData)
+        
+        let firstContact = response.results.first
+        
+        #expect(firstContact?.id == 1)
+        #expect(firstContact?.createdAt == Date(timeIntervalSince1970: 0))
+        #expect(firstContact?.updatedAt == Date(timeIntervalSince1970: 1))
+        #expect(firstContact?.deletedAt == nil)
+        #expect(firstContact?.firstname == "Matt")
+        #expect(firstContact?.lastname == "Smith")
+        #expect(firstContact?.nickname == "Matty")
+        #expect(firstContact?.gender == .male)
+        #expect(firstContact?.email == "matt.smith@example.com")
+        #expect(firstContact?.phone == "(555) 1234 567890")
+        #expect(firstContact?.birthday == "1982-10-28")
+        #expect(firstContact?.photo == "437f3e01-7e7d-4e8a-a3c9-212b33b4229e_photo.jpg")
+        #expect(firstContact?.relationships == nil)
+        #expect(firstContact?.address == "1 Tardis Way")
+        #expect(firstContact?.howWeMet == "Watching a TV show")
+        #expect(firstContact?.foodPreference == "Vegetarian")
+        #expect(firstContact?.workInformation == "Actor")
+        #expect(firstContact?.contactInformation == "Somewhere, sometime")
+        #expect(firstContact?.circles == ["Doctor Who"])
+        #expect(firstContact?.customFields == ["Doctor #": "11th Doctor"])
+        #expect(firstContact?.archived == false)
+        #expect(firstContact?.photoThumbnail == "")
+        
+        #expect(response.limit == 25)
+        #expect(response.page == 1)
+        #expect(response.total == 1)
+        #expect(response.totalPages == nil)
+    }
     
-    let jsonData = Data(json.utf8)
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    let response = try decoder.decode(PaginatedResponse<Contact>.self, from: jsonData)
-    
-    let firstContact = response.results.first
-    
-    #expect(firstContact?.id == 1)
-    #expect(firstContact?.createdAt == Date(timeIntervalSince1970: 0))
-    #expect(firstContact?.updatedAt == Date(timeIntervalSince1970: 1))
-    #expect(firstContact?.deletedAt == nil)
-    #expect(firstContact?.firstname == "Matt")
-    #expect(firstContact?.lastname == "Smith")
-    #expect(firstContact?.nickname == "Matty")
-    #expect(firstContact?.gender == .male)
-    #expect(firstContact?.email == "matt.smith@example.com")
-    #expect(firstContact?.phone == "(555) 1234 567890")
-    #expect(firstContact?.birthday == "1982-10-28")
-    #expect(firstContact?.photo == "437f3e01-7e7d-4e8a-a3c9-212b33b4229e_photo.jpg")
-    #expect(firstContact?.relationships == nil)
-    #expect(firstContact?.address == "1 Tardis Way")
-    #expect(firstContact?.howWeMet == "Watching a TV show")
-    #expect(firstContact?.foodPreference == "Vegetarian")
-    #expect(firstContact?.workInformation == "Actor")
-    #expect(firstContact?.contactInformation == "Somewhere, sometime")
-    #expect(firstContact?.circles == ["Doctor Who"])
-    #expect(firstContact?.customFields == ["Doctor #": "11th Doctor"])
-    #expect(firstContact?.archived == false)
-    #expect(firstContact?.photoThumbnail == "")
-    
-    #expect(response.limit == 25)
-    #expect(response.page == 1)
-    #expect(response.total == 1)
-    #expect(response.totalPages == nil)
-}
-
-@Test func testDecodeNotes() throws {
-    let json = """
+    @Test func testDecodeNotes() throws {
+        let json = """
     {
         "limit": 25,
         "notes": [
@@ -204,32 +205,32 @@ import Foundation
         "total": 1
     }
     """
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let response = try decoder.decode(PaginatedResponse<Note>.self, from: jsonData)
+        
+        let firstNote = response.results.first
+        
+        #expect(firstNote?.id == 1)
+        #expect(firstNote?.createdAt.timeIntervalSince1970 == 1774740142)
+        #expect(firstNote?.updatedAt?.timeIntervalSince1970 == 1774740142)
+        #expect(firstNote?.deletedAt == nil)
+        #expect(firstNote?.content == "Some Note")
+        #expect(firstNote?.date?.timeIntervalSince1970 == 1774656000)
+        #expect(firstNote?.contactId == nil)
+        
+        #expect(response.limit == 25)
+        #expect(response.page == 1)
+        #expect(response.total == 1)
+        #expect(response.totalPages == nil)
+    }
     
-    let jsonData = Data(json.utf8)
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    let response = try decoder.decode(PaginatedResponse<Note>.self, from: jsonData)
-    
-    let firstNote = response.results.first
-    
-    #expect(firstNote?.id == 1)
-    #expect(firstNote?.createdAt.timeIntervalSince1970 == 1774740142)
-    #expect(firstNote?.updatedAt?.timeIntervalSince1970 == 1774740142)
-    #expect(firstNote?.deletedAt == nil)
-    #expect(firstNote?.content == "Some Note")
-    #expect(firstNote?.date?.timeIntervalSince1970 == 1774656000)
-    #expect(firstNote?.contactId == nil)
-    
-    #expect(response.limit == 25)
-    #expect(response.page == 1)
-    #expect(response.total == 1)
-    #expect(response.totalPages == nil)
-}
-
-@Test func testDecodeRelationships() throws {
-    let json = """
+    @Test func testDecodeRelationships() throws {
+        let json = """
     {
         "relationships": [
             {
@@ -275,60 +276,60 @@ import Foundation
         ]
     }
     """
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let response = try decoder.decode(PaginatedResponse<Relationship>.self, from: jsonData)
+        
+        let firstRelationship = response.results.first
+        
+        #expect(firstRelationship?.id == 1)
+        #expect(firstRelationship?.createdAt.timeIntervalSince1970 == 1774738813)
+        #expect(firstRelationship?.updatedAt?.timeIntervalSince1970 == 1774738813)
+        #expect(firstRelationship?.deletedAt == nil)
+        #expect(firstRelationship?.name == "David Smith")
+        #expect(firstRelationship?.type == "Father")
+        #expect(firstRelationship?.gender == .unknown)
+        #expect(firstRelationship?.birthday == "")
+        #expect(firstRelationship?.contactId == 2)
+        #expect(firstRelationship?.relatedContactId == 1)
+        
+        let contact = firstRelationship?.relatedContact
+        
+        #expect(contact?.id == 1)
+        #expect(contact?.createdAt == Date(timeIntervalSince1970: 0))
+        #expect(contact?.updatedAt == Date(timeIntervalSince1970: 1))
+        #expect(contact?.deletedAt == nil)
+        #expect(contact?.firstname == "Matt")
+        #expect(contact?.lastname == "Smith")
+        #expect(contact?.nickname == "Matty")
+        #expect(contact?.gender == .male)
+        #expect(contact?.email == "matt.smith@example.com")
+        #expect(contact?.phone == "(555) 1234 567890")
+        #expect(contact?.birthday == "1982-10-28")
+        #expect(contact?.photo == "437f3e01-7e7d-4e8a-a3c9-212b33b4229e_photo.jpg")
+        #expect(contact?.relationships == nil)
+        #expect(contact?.address == "1 Tardis Way")
+        #expect(contact?.howWeMet == "Watching a TV show")
+        #expect(contact?.foodPreference == "Vegetarian")
+        #expect(contact?.workInformation == "Actor")
+        #expect(contact?.contactInformation == "Somewhere, sometime")
+        #expect(contact?.circles == ["Doctor Who"])
+        #expect(contact?.customFields == ["Doctor #": "11th Doctor"])
+        #expect(contact?.archived == false)
+        #expect(contact?.photoThumbnail == "")
+        
+        #expect(response.limit == nil)
+        #expect(response.page == nil)
+        #expect(response.total == nil)
+        #expect(response.totalPages == nil)
+    }
     
-    let jsonData = Data(json.utf8)
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    let response = try decoder.decode(PaginatedResponse<Relationship>.self, from: jsonData)
-    
-    let firstRelationship = response.results.first
-    
-    #expect(firstRelationship?.id == 1)
-    #expect(firstRelationship?.createdAt.timeIntervalSince1970 == 1774738813)
-    #expect(firstRelationship?.updatedAt?.timeIntervalSince1970 == 1774738813)
-    #expect(firstRelationship?.deletedAt == nil)
-    #expect(firstRelationship?.name == "David Smith")
-    #expect(firstRelationship?.type == "Father")
-    #expect(firstRelationship?.gender == .unknown)
-    #expect(firstRelationship?.birthday == "")
-    #expect(firstRelationship?.contactId == 2)
-    #expect(firstRelationship?.relatedContactId == 1)
-    
-    let contact = firstRelationship?.relatedContact
-    
-    #expect(contact?.id == 1)
-    #expect(contact?.createdAt == Date(timeIntervalSince1970: 0))
-    #expect(contact?.updatedAt == Date(timeIntervalSince1970: 1))
-    #expect(contact?.deletedAt == nil)
-    #expect(contact?.firstname == "Matt")
-    #expect(contact?.lastname == "Smith")
-    #expect(contact?.nickname == "Matty")
-    #expect(contact?.gender == .male)
-    #expect(contact?.email == "matt.smith@example.com")
-    #expect(contact?.phone == "(555) 1234 567890")
-    #expect(contact?.birthday == "1982-10-28")
-    #expect(contact?.photo == "437f3e01-7e7d-4e8a-a3c9-212b33b4229e_photo.jpg")
-    #expect(contact?.relationships == nil)
-    #expect(contact?.address == "1 Tardis Way")
-    #expect(contact?.howWeMet == "Watching a TV show")
-    #expect(contact?.foodPreference == "Vegetarian")
-    #expect(contact?.workInformation == "Actor")
-    #expect(contact?.contactInformation == "Somewhere, sometime")
-    #expect(contact?.circles == ["Doctor Who"])
-    #expect(contact?.customFields == ["Doctor #": "11th Doctor"])
-    #expect(contact?.archived == false)
-    #expect(contact?.photoThumbnail == "")
-    
-    #expect(response.limit == nil)
-    #expect(response.page == nil)
-    #expect(response.total == nil)
-    #expect(response.totalPages == nil)
-}
-
-@Test func testDecodeUsers() throws {
-    let json = """
+    @Test func testDecodeUsers() throws {
+        let json = """
     {
         "users": [
             {
@@ -348,27 +349,28 @@ import Foundation
         "total_pages": 1
     }
     """
-    
-    let jsonData = Data(json.utf8)
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    let response = try decoder.decode(PaginatedResponse<User>.self, from: jsonData)
-    
-    let firstUser = response.results.first
-    
-    #expect(firstUser?.id == 1)
-    #expect(firstUser?.username == "leo")
-    #expect(firstUser?.email == "leo@example.com")
-    #expect(firstUser?.language == "en")
-    #expect(firstUser?.date_format == "eu")
-    #expect(firstUser?.is_admin == true)
-    #expect(firstUser?.created_at.timeIntervalSince1970 == 1774738368)
-    #expect(firstUser?.updated_at?.timeIntervalSince1970 == 1774740185)
-    
-    #expect(response.limit == 25)
-    #expect(response.page == 1)
-    #expect(response.total == 1)
-    #expect(response.totalPages == 1)
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let response = try decoder.decode(PaginatedResponse<User>.self, from: jsonData)
+        
+        let firstUser = response.results.first
+        
+        #expect(firstUser?.id == 1)
+        #expect(firstUser?.username == "leo")
+        #expect(firstUser?.email == "leo@example.com")
+        #expect(firstUser?.language == "en")
+        #expect(firstUser?.date_format == "eu")
+        #expect(firstUser?.is_admin == true)
+        #expect(firstUser?.created_at.timeIntervalSince1970 == 1774738368)
+        #expect(firstUser?.updated_at?.timeIntervalSince1970 == 1774740185)
+        
+        #expect(response.limit == 25)
+        #expect(response.page == 1)
+        #expect(response.total == 1)
+        #expect(response.totalPages == 1)
+    }
 }

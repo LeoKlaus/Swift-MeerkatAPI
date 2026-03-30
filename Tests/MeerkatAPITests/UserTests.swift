@@ -9,8 +9,9 @@ import Testing
 import Foundation
 @testable import MeerkatAPI
 
-@Test func testDecodeUser() throws {
-    let json = """
+@Suite struct UserTests {
+    @Test func testDecodeUser() throws {
+        let json = """
     {
         "id": 1,
         "username": "leo",
@@ -22,20 +23,21 @@ import Foundation
         "updated_at": "2026-03-28T23:23:05.0Z"
     }
     """
-    
-    let jsonData = Data(json.utf8)
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    let user = try decoder.decode(User.self, from: jsonData)
-    
-    #expect(user.id == 1)
-    #expect(user.username == "leo")
-    #expect(user.email == "leo@example.com")
-    #expect(user.language == "en")
-    #expect(user.date_format == "eu")
-    #expect(user.is_admin == true)
-    #expect(user.created_at.timeIntervalSince1970 == 1774738368)
-    #expect(user.updated_at?.timeIntervalSince1970 == 1774740185)
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let user = try decoder.decode(User.self, from: jsonData)
+        
+        #expect(user.id == 1)
+        #expect(user.username == "leo")
+        #expect(user.email == "leo@example.com")
+        #expect(user.language == "en")
+        #expect(user.date_format == "eu")
+        #expect(user.is_admin == true)
+        #expect(user.created_at.timeIntervalSince1970 == 1774738368)
+        #expect(user.updated_at?.timeIntervalSince1970 == 1774740185)
+    }
 }

@@ -9,8 +9,9 @@ import Testing
 import Foundation
 @testable import MeerkatAPI
 
-@Test func testDecodeNote() throws {
-    let json = """
+@Suite struct NoteTests {
+    @Test func testDecodeNote() throws {
+        let json = """
     {
         "ID": 1,
         "CreatedAt": "2026-03-28T23:22:22.0Z",
@@ -44,19 +45,20 @@ import Foundation
         }
     }
     """
-    
-    let jsonData = Data(json.utf8)
-    
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    
-    let note = try decoder.decode(Note.self, from: jsonData)
-    
-    #expect(note.id == 1)
-    #expect(note.createdAt.timeIntervalSince1970 == 1774740142)
-    #expect(note.updatedAt?.timeIntervalSince1970 == 1774740142)
-    #expect(note.deletedAt == nil)
-    #expect(note.content == "Some Note")
-    #expect(note.date?.timeIntervalSince1970 == 1774656000)
-    #expect(note.contactId == nil)
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let note = try decoder.decode(Note.self, from: jsonData)
+        
+        #expect(note.id == 1)
+        #expect(note.createdAt.timeIntervalSince1970 == 1774740142)
+        #expect(note.updatedAt?.timeIntervalSince1970 == 1774740142)
+        #expect(note.deletedAt == nil)
+        #expect(note.content == "Some Note")
+        #expect(note.date?.timeIntervalSince1970 == 1774656000)
+        #expect(note.contactId == nil)
+    }
 }
