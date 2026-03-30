@@ -73,9 +73,9 @@ nonisolated open class ApiHandler {
 }
 
 // MARK: - Convenience Methods
+
+// MARK: Auth
 extension ApiHandler {
-    
-    // MARK: Auth
     
     /**
      Create a new user account
@@ -93,7 +93,7 @@ extension ApiHandler {
         ]
         
         // Just returns a success message and a 201
-        let _ = try await self.sendRequest(to: .register, method: .POST, body: try self.jsonEncoder.encode(credentials))
+        _ = try await self.sendRequest(to: .register, method: .POST, body: try self.jsonEncoder.encode(credentials))
     }
     
     /**
@@ -118,7 +118,7 @@ extension ApiHandler {
      Clear current session cookie
      */
     public func logout() async throws {
-        let _ = try await self.sendRequest(to: .logout, method: .POST)
+        _ = try await self.sendRequest(to: .logout, method: .POST)
     }
     
     /**
@@ -127,7 +127,7 @@ extension ApiHandler {
      
      - Returns: PasswordStrengthResponse for the given password
      */
-    public func checkPasswordStrength(password: String) async throws -> PasswordStrengthResponse {
+    public func checkPasswordStrength(_ password: String) async throws -> PasswordStrengthResponse {
         let passwordDict = [
             "Password": password
         ]
@@ -140,13 +140,13 @@ extension ApiHandler {
     /**
      Send a password reset email
      - Parameter mailAddress: Mail address of the user whos password should be reset
-    */
+     */
     public func requestPasswordReset(mailAddress: String) async throws {
         let mailDict = [
             "Email": mailAddress
         ]
         
-        let _ = try await self.sendRequest(to: .requestPasswordReset, method: .POST, body: self.jsonEncoder.encode(mailDict))
+        _ = try await self.sendRequest(to: .requestPasswordReset, method: .POST, body: self.jsonEncoder.encode(mailDict))
     }
     
     /**
@@ -160,11 +160,17 @@ extension ApiHandler {
             "Password": newPassword
         ]
         
-        let _ = try await self.sendRequest(to: .confirmPasswordReset, method: .POST, body: self.jsonEncoder.encode(tokenPassDict))
+        _ = try await self.sendRequest(to: .confirmPasswordReset, method: .POST, body: self.jsonEncoder.encode(tokenPassDict))
     }
+}
+
+
+// MARK: User
+extension ApiHandler {
     
-    // MARK: User
-    /// Get the current user
+    /** Get the current user
+     - Returns: The current user
+     */
     public func getMe() async throws -> User {
         return try await self.get(from: .me)
     }
@@ -179,42 +185,39 @@ extension ApiHandler {
             "new_password": newPassword
         ]
         
-        let _ = try await self.sendRequest(to: .changePassword, method: .POST, body: self.jsonEncoder.encode(passDict))
+        _ = try await self.sendRequest(to: .changePassword, method: .POST, body: self.jsonEncoder.encode(passDict))
     }
     
     /**
      Update UI language preference (WebUI only!)
      - Parameter newLanguage: New language to use
      */
-    public func changeLanguage(newLanguage: InterfaceLanguage) async throws {
+    public func changeLanguage(_ newLanguage: InterfaceLanguage) async throws {
         let bodyDict = [
             "language": newLanguage.rawValue
         ]
         
-        let _ = try await self.sendRequest(to: .language, method: .PATCH, body: self.jsonEncoder.encode(bodyDict))
+        _ = try await self.sendRequest(to: .language, method: .PATCH, body: self.jsonEncoder.encode(bodyDict))
     }
     
     /**
      Update date format preference (WebUI only!)
      - Parameter newFormat: New date format to use
      */
-    public func changeDateFormat(newFormat: DateFormat) async throws {
+    public func changeDateFormat(_ newFormat: DateFormat) async throws {
         let bodyDict = [
             "date_format": newFormat.rawValue
         ]
         
-        let _ = try await self.sendRequest(to: .dateFormat, method: .PATCH, body: self.jsonEncoder.encode(bodyDict))
+        _ = try await self.sendRequest(to: .dateFormat, method: .PATCH, body: self.jsonEncoder.encode(bodyDict))
     }
     
     /**
      Get custom field names
-     
      - Returns: CustomFields object containing all custom field names
      */
     public func getCustomFields() async throws -> CustomFields {
-        let data = try await self.sendRequest(to: .customFields)
-        
-        return try self.jsonDecoder.decode(CustomFields.self, from: data)
+        return try await self.get(from: .customFields)
     }
     
     /**
@@ -223,24 +226,73 @@ extension ApiHandler {
      
      - Returns: CustomFields object containing all custom field names
      */
-    public func updateCustomFields(newFields: CustomFields) async throws -> CustomFields {
+    public func updateCustomFields(_ newFields: CustomFields) async throws -> CustomFields {
         let data = try await self.sendRequest(to: .customFields, method: .PATCH, body: self.jsonEncoder.encode(newFields))
         
         return try self.jsonDecoder.decode(CustomFields.self, from: data)
     }
-    
-    // MARK: Contacts
-    /// List contacts (GET/POST)
-    public func getContacts(fields: [Contact.CodingKeys] = Contact.defaultFields) async throws -> [Contact] {
+}
+
+
+// MARK: Contacts
+extension ApiHandler {
+    /**
+     List contacts
+     - Parameter fields: Fields to include with the response (defaults are sensible)
+     - Parameter limit: Maximum number of contacts per page
+     - Parameter page: Which page to load (starts at 1!)
+     - Parameter sort: Which attribute to sort contacts by (defaults to `ID`)
+     - Parameter order: Sort order, either `asc` or `desc`
+     
+     - Returns: List of contacts
+     */
+    public func getContacts(fields: [Contact.CodingKeys] = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> [Contact] {
         let fieldsQueryItem = URLQueryItem(name: "fields", value: fields.map{ $0.rawValue }.joined(separator: ","))
         let response: PaginatedResponse<Contact> = try await self.get(from: .contacts, parameters: [fieldsQueryItem])
         return response.results
     }
     
-    /// Get a contact (GET/PUT/DELETE)
+    /**
+     Create new contact
+     - Parameter newContact: Contact object for the new contact
+     
+     - Returns: The newly created contact
+     */
+    public func createContact(_ newContact: Contact) async throws -> Contact {
+        let data = try await self.sendRequest(to: .contacts, method: .POST, body: self.jsonEncoder.encode(newContact))
+        
+        return try self.jsonDecoder.decode(Contact.self, from: data)
+    }
+    
+    /**
+     Get a contact (GET/PUT/DELETE)
+     
+     - Returns: The contact with the given id
+     */
     public func getContact(id: Int) async throws -> Contact {
         return try await self.get(from: .contact(id: id))
     }
+    
+    /**
+     Update an existing contact
+     - Parameter contact: Contact object for the contact
+     
+     - Returns: The updated contact
+     */
+    public func updateContact(_ contact: Contact) async throws -> Contact {
+        let data = try await self.sendRequest(to: .contact(id: contact.id), method: .PUT, body: self.jsonEncoder.encode(contact))
+        
+        return try self.jsonDecoder.decode(Contact.self, from: data)
+    }
+    
+    /**
+     Delete an existing contact
+     - Parameter contact: Contact to delete
+     */
+    public func deleteContact(_ contact: Contact) async throws {
+        _ = try await self.sendRequest(to: .contact(id: contact.id), method: .DELETE)
+    }
+    
     /// Archive a contact (POST)
     //case archiveContact(id: Int)
     /// Unarchive a contact (POST)
@@ -251,38 +303,62 @@ extension ApiHandler {
     //case random
     /// Get upcoming birthdays (GET)
     //case birthdays
-    /// Get a contact’s profile picture (GET/POST)
-    public func getContactImage(contactId: Int) async throws -> Data {
-        return try await self.getData(from: .contactImage(id: contactId))
+    /** Get a contact’s profile picture
+     - Parameter contact: The contact whose profile should be loaded
+     */
+    public func getContactImage(contact: Contact) async throws -> Data {
+        return try await self.getData(from: .contactImage(id: contact.id))
+    }
+    
+    /**
+     Upload an image for a contact
+     - Parameter contact: The contact this image sohuld be assigned to
+     - Parameter imageData: Binary data for the image
+     */
+    public func createContactImage(contact: Contact, imageData: Data) async throws {
+        // TODO: Implement this
+        throw ApiError.notFound
     }
     /// Proxy an external image URL for upload preview (GET)
     //case proxyImage
-    
-    // MARK: Relationship Endpoints
+}
+
+
+// MARK: Relationship Endpoints
+extension ApiHandler {
     /// List outgoing relationships (GET/POST)
     //case relationships(contactId: Int)
     /// List incoming relationships (GET)
     //case incomingRelationships(contactId: Int)
     /// Update a relationship (PUT/DELETE)
     //case updateRelationship(contactId: Int, relationshipId: Int)
-    
-    // MARK: Note Endpoints
+}
+
+
+// MARK: Note Endpoints
+extension ApiHandler {
     /// List notes for a contact (GET/POST)
     //case contactNotes(contactId: Int)
     /// List unassigned notes (GET/POST)
     //case unassignedNotes
     /// Get a note (GET/PUT/DELETE)
     //case note(id: Int)
-    
-    // MARK: Activity Endpoints
+}
+
+
+// MARK: Activity Endpoints
+extension ApiHandler {
     /// List all activities (GET/POST)
     //case activities
     /// Get an activity (GET/PUT/DELETE)
     //case activity(id: Int)
     /// List activities for a contact (GET)
     //case contactActivities(contactId: Int)
-    
-    // MARK: Reminder Endpoints
+}
+
+
+// MARK: Reminder Endpoints
+extension ApiHandler {
     /// List all reminders (GET)
     //case reminders
     /// List upcoming reminders (used by dashboard) (GET)
@@ -297,21 +373,29 @@ extension ApiHandler {
     //case completedReminders(contactId: Int)
     /// Delete a completion entry (DELETE)
     //case reminderCompletions(id: Int)
-    
-    // MARK: Graph
+}
+
+
+// MARK: Graph
+extension ApiHandler {
     /// Get contact network graph data (GET)
     //case graph
-    
-    // MARK: Admin
+}
+
+
+// MARK: Admin
+extension ApiHandler {
     /// List all users (GET)
     //case users
     /// Get a user (GET/PATCH/DELETE)
     //case user(id: Int)
-    
-    // MARK: Health
+}
+
+
+// MARK: Health
+extension ApiHandler {
     /**
      Health check
-     
      - Returns: Health status for the server
      */
     public func checkHealth() async throws -> HealthStatus {
