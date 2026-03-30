@@ -5,7 +5,7 @@
 //  Created by Leo Wehrfritz on 29.03.26.
 //
 
-enum HTTPMethod: String {
+public enum HTTPMethod: String {
     case GET
     case PUT
     case POST

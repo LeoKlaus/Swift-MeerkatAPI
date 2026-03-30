@@ -5,7 +5,7 @@
 //  Created by Leo Wehrfritz on 30.03.26.
 //
 
-public enum InterfaceLanguage: Decodable, Equatable {
+public enum InterfaceLanguage: Decodable, Equatable, Hashable {
     
     case en
     case de

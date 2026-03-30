@@ -97,11 +97,11 @@ public struct Contact: Codable, Identifiable {
     ]
     
     public var fullName: String {
-        if let nickname, let lastname {
+        if let nickname, let lastname, !nickname.isEmpty && !lastname.isEmpty {
             return firstname + " \"\(nickname)\" " + lastname
-        } else if let nickname {
+        } else if let nickname, !nickname.isEmpty {
             return firstname + " \"\(nickname)\""
-        } else if let lastname {
+        } else if let lastname, !lastname.isEmpty {
             return firstname + " " + lastname
         } else {
             return firstname

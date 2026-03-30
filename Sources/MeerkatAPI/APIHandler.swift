@@ -15,8 +15,9 @@ nonisolated open class ApiHandler {
         category: String(describing: ApiHandler.self)
     )
     
+    public let serverURL: URL
+    
     let session: URLSession
-    let serverURL: URL
     let jsonDecoder: JSONDecoder
     
     nonisolated public init(serverURL: URL) {
@@ -28,7 +29,7 @@ nonisolated open class ApiHandler {
         self.jsonDecoder.dateDecodingStrategy = .iso8601
     }
     
-    private func sendRequest(to endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil, parameters: [URLQueryItem] = []) async throws -> Data {
+    open func sendRequest(to endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil, parameters: [URLQueryItem] = []) async throws -> Data {
         var request = URLRequest(url: self.serverURL.appendingApiPath(endpoint).appending(queryItems: parameters))
         
         request.httpMethod = method.rawValue
@@ -109,7 +110,7 @@ extension ApiHandler {
         
         let data = try await self.sendRequest(to: .login, method: .POST, body: encoder.encode(credentials))
         
-        return try JSONDecoder().decode(LoginResponse.self, from: data)
+        return try self.jsonDecoder.decode(LoginResponse.self, from: data)
     }
     
     /**
@@ -134,14 +135,14 @@ extension ApiHandler {
         
         let data = try await self.sendRequest(to: .checkPasswordStrength, method: .POST, body: encoder.encode(passwordDict))
         
-        return try JSONDecoder().decode(PasswordStrengthResponse.self, from: data)
+        return try self.jsonDecoder.decode(PasswordStrengthResponse.self, from: data)
     }
     
     /**
      Send a password reset email
      - Parameter mailAddress: Mail address of the user whos password should be reset
     */
-    func requestPasswordReset(mailAddress: String) async throws {
+    public func requestPasswordReset(mailAddress: String) async throws {
         let mailDict = [
             "Email": mailAddress
         ]
@@ -156,7 +157,7 @@ extension ApiHandler {
      - Parameter token: Token from the password reset mail
      - Parameter newPassword: New password for the user
      */
-    func requestPasswordReset(token: String, newPassword: String) async throws {
+    public func confirmPasswordReset(token: String, newPassword: String) async throws {
         let tokenPassDict = [
             "Token": token,
             "Password": newPassword
@@ -261,6 +262,14 @@ extension ApiHandler {
     //case user(id: Int)
     
     // MARK: Health
-    /// Health check
-    //case health
+    /**
+     Health check
+     
+     - Returns: Health status for the server
+     */
+    public func checkHealth() async throws -> HealthStatus {
+        let data = try await self.sendRequest(to: .health)
+        
+        return try self.jsonDecoder.decode(HealthStatus.self, from: data)
+    }
 }
