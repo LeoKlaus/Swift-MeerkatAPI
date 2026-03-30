@@ -19,6 +19,7 @@ nonisolated open class ApiHandler {
     
     let session: URLSession
     let jsonDecoder: JSONDecoder
+    let jsonEncoder: JSONEncoder
     
     nonisolated public init(serverURL: URL) {
         self.serverURL = serverURL
@@ -27,6 +28,9 @@ nonisolated open class ApiHandler {
         
         self.jsonDecoder = JSONDecoder()
         self.jsonDecoder.dateDecodingStrategy = .iso8601
+        
+        self.jsonEncoder = JSONEncoder()
+        self.jsonEncoder.dateEncodingStrategy = .iso8601
     }
     
     open func sendRequest(to endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil, parameters: [URLQueryItem] = []) async throws -> Data {
@@ -90,7 +94,7 @@ extension ApiHandler {
         ]
         
         // Just returns a success message and a 201
-        let _ = try await self.sendRequest(to: .register, method: .POST, body: try JSONEncoder().encode(credentials))
+        let _ = try await self.sendRequest(to: .register, method: .POST, body: try self.jsonEncoder.encode(credentials))
     }
     
     /**
@@ -106,9 +110,7 @@ extension ApiHandler {
             "password": password
         ]
         
-        let encoder = JSONEncoder()
-        
-        let data = try await self.sendRequest(to: .login, method: .POST, body: encoder.encode(credentials))
+        let data = try await self.sendRequest(to: .login, method: .POST, body: self.jsonEncoder.encode(credentials))
         
         return try self.jsonDecoder.decode(LoginResponse.self, from: data)
     }
@@ -131,9 +133,7 @@ extension ApiHandler {
             "Password": password
         ]
         
-        let encoder = JSONEncoder()
-        
-        let data = try await self.sendRequest(to: .checkPasswordStrength, method: .POST, body: encoder.encode(passwordDict))
+        let data = try await self.sendRequest(to: .checkPasswordStrength, method: .POST, body: self.jsonEncoder.encode(passwordDict))
         
         return try self.jsonDecoder.decode(PasswordStrengthResponse.self, from: data)
     }
@@ -147,9 +147,7 @@ extension ApiHandler {
             "Email": mailAddress
         ]
         
-        let encoder = JSONEncoder()
-        
-        let _ = try await self.sendRequest(to: .requestPasswordReset, method: .POST, body: encoder.encode(mailDict))
+        let _ = try await self.sendRequest(to: .requestPasswordReset, method: .POST, body: self.jsonEncoder.encode(mailDict))
     }
     
     /**
@@ -163,9 +161,7 @@ extension ApiHandler {
             "Password": newPassword
         ]
         
-        let encoder = JSONEncoder()
-        
-        let _ = try await self.sendRequest(to: .confirmPasswordReset, method: .POST, body: encoder.encode(tokenPassDict))
+        let _ = try await self.sendRequest(to: .confirmPasswordReset, method: .POST, body: self.jsonEncoder.encode(tokenPassDict))
     }
     
     // MARK: User
