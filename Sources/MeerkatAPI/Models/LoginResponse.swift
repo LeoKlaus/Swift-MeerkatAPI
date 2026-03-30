@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct LoginResponse: Codable {
+public struct LoginResponse: Decodable {
     public let date_format: String
     public let language: InterfaceLanguage
 }

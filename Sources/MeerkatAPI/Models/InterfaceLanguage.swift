@@ -5,7 +5,7 @@
 //  Created by Leo Wehrfritz on 30.03.26.
 //
 
-public enum InterfaceLanguage: Codable {
+public enum InterfaceLanguage: Decodable, Equatable {
     
     case en
     case de
@@ -22,7 +22,7 @@ public enum InterfaceLanguage: Codable {
         }
     }
     
-    public init?(rawValue: String) {
+    public init(rawValue: String) {
         switch rawValue {
         case "en":
             self = .en
@@ -31,5 +31,10 @@ public enum InterfaceLanguage: Codable {
         default:
             self = .unknown(langcode: rawValue)
         }
+    }
+    
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.init(rawValue: try container.decode(String.self))
     }
 }

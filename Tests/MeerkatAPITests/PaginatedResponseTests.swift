@@ -74,7 +74,7 @@ import Foundation
     
     let firstBirthday = response.results.first
     
-    #expect(firstBirthday?.type == "contact")
+    #expect(firstBirthday?.type == .contact)
     #expect(firstBirthday?.name == "Matt Smith")
     #expect(firstBirthday?.birthday == "1982-10-28")
     #expect(firstBirthday?.contactId == 1)
