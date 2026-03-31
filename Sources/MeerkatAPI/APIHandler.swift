@@ -33,11 +33,20 @@ nonisolated open class ApiHandler {
         self.jsonEncoder.dateEncodingStrategy = .iso8601
     }
     
-    open func sendRequest(to endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil, parameters: [URLQueryItem] = []) async throws -> Data {
+    open func sendRequest(to endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil, multipartBoundary: String? = nil, parameters: [URLQueryItem] = []) async throws -> Data {
+        
         var request = URLRequest(url: self.serverURL.appendingApiPath(endpoint).appending(queryItems: parameters))
         
         request.httpMethod = method.rawValue
         request.httpBody = body
+        
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        if let multipartBoundary {
+            request.addValue("multipart/form-data; boundary=\(multipartBoundary)", forHTTPHeaderField: "Content-Type")
+        } else {
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         
         Self.logger.debug("Sending \(method.rawValue, privacy: .public) request to \(endpoint.toPath(), privacy: .public)")
         
@@ -265,7 +274,7 @@ extension ApiHandler {
     }
     
     /**
-     Get a contact (GET/PUT/DELETE)
+     Get a contact
      
      - Returns: The contact with the given id
      */
@@ -293,16 +302,54 @@ extension ApiHandler {
         _ = try await self.sendRequest(to: .contact(id: contact.id), method: .DELETE)
     }
     
-    /// Archive a contact (POST)
-    //case archiveContact(id: Int)
-    /// Unarchive a contact (POST)
-    //case unarchiveContact(id: Int)
-    /// List all circles in use (GET)
-    //case circles
-    /// Get five random contacts (GET)
-    //case random
-    /// Get upcoming birthdays (GET)
-    //case birthdays
+    /**
+     Archive a contact
+     - Parameter contact: Contact to archive
+     
+     - Returns: The archived contact
+     */
+    public func archiveContact(_ contact: Contact) async throws -> Contact {
+        let data = try await self.sendRequest(to: .archiveContact(id: contact.id), method: .POST)
+        
+        return try self.jsonDecoder.decode(Contact.self, from: data)
+    }
+    /**
+     Unarchive a contact
+     - Parameter contact: Contact to unarchive
+     
+     - Returns: The unarchived contact
+     */
+    public func unarchiveContact(_ contact: Contact) async throws -> Contact {
+        let data = try await self.sendRequest(to: .unarchiveContact(id: contact.id), method: .POST)
+        
+        return try self.jsonDecoder.decode(Contact.self, from: data)
+    }
+    /**
+     List all circles in use
+     
+     - Returns: A list of all currently used circles
+     */
+    public func getCircles() async throws -> [String] {
+        return try await self.get(from: .circles)
+    }
+    
+    /**
+     Get five random contacts
+     
+     - Returns: Up to five random contacts
+     */
+    public func getRandomContacts() async throws -> [Contact] {
+        // TODO: Check if this gets support for fields in the future
+        let response: PaginatedResponse<Contact> = try await self.get(from: .contacts)
+        return response.results
+    }
+    
+    /// Get upcoming birthdays
+    public func getUpcomingBirthdays() async throws -> [Birthday] {
+        let response: PaginatedResponse<Birthday> = try await self.get(from: .birthdays)
+        return response.results
+    }
+    
     /** Get a contact’s profile picture
      - Parameter contact: The contact whose profile should be loaded
      */
@@ -314,13 +361,17 @@ extension ApiHandler {
      Upload an image for a contact
      - Parameter contact: The contact this image sohuld be assigned to
      - Parameter imageData: Binary data for the image
+     
+     - Returns: The updated contact
      */
-    public func createContactImage(contact: Contact, imageData: Data) async throws {
-        // TODO: Implement this
-        throw ApiError.notFound
+    public func uploadContactImage(contact: Contact, imageURL: URL) async throws -> Contact {
+        let boundary = UUID().uuidString
+        
+        let body = try imageURL.toMultipartData(with: boundary)
+        let data = try await self.sendRequest(to: .contactImage(id: contact.id), method: .POST, body: body, multipartBoundary: boundary)
+        
+        return try self.jsonDecoder.decode(Contact.self, from: data)
     }
-    /// Proxy an external image URL for upload preview (GET)
-    //case proxyImage
 }
 
 
