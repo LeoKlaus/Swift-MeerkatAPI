@@ -561,7 +561,7 @@ public extension ApiHandler {
      Get an activity
      - Returns: Activity with the given id
      */
-    func getNote(_ id: Int) async throws -> Activity {
+    func getActivity(_ id: Int) async throws -> Activity {
         return try await self.get(from: .activity(id: id))
     }
     
@@ -571,7 +571,7 @@ public extension ApiHandler {
      
      - Returns: The updated activity
      */
-    func updateNote(_ activity: Activity) async throws -> Activity {
+    func updateActivity(_ activity: Activity) async throws -> Activity {
         let data = try await self.sendRequest(to: .activity(id: activity.id), method: .PUT, body: self.jsonEncoder.encode(activity))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Activity>.self, from: data)
@@ -603,20 +603,110 @@ public extension ApiHandler {
 
 // MARK: Reminder Endpoints
 public extension ApiHandler {
-    /// List all reminders (GET)
-    //case reminders
-    /// List upcoming reminders (used by dashboard) (GET)
-    //case upcomingReminders
-    /// Get a reminder (GET/PUT/DELETE)
-    //case reminder(id: Int)
-    /// Mark a reminder complete (creates timeline entry) (POST)
-    //case completeReminder(id: Int)
-    /// List reminders for a contact (POST/GET)
-    //case contactReminders(contactId: Int)
-    /// List completion history for a contact (timeline entries) (GET)
-    //case completedReminders(contactId: Int)
-    /// Delete a completion entry (DELETE)
-    //case reminderCompletions(id: Int)
+    /**
+     Get all reminders
+     - Returns: List of reminders
+     */
+    func getReminders() async throws -> [Reminder] {
+        let data = try await self.sendRequest(to: .reminders)
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
+        return response.results
+    }
+    
+    /**
+     Get all upcoming reminders
+     - Returns: List of reminders
+     */
+    func getUpcomingReminders() async throws -> [Reminder] {
+        let data = try await self.sendRequest(to: .upcomingReminders)
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
+        return response.results
+    }
+    
+    /**
+     Get a reminder
+     - Returns: Reminder with the given id
+     */
+    func getReminder(_ id: Int) async throws -> Reminder {
+        return try await self.get(from: .reminder(id: id))
+    }
+    
+    /**
+     Update a reminder
+     - Parameter reminder: Reminder to update
+     
+     - Returns: The updated reminder
+     */
+    func updateReminder(_ reminder: Reminder) async throws -> Reminder {
+        let data = try await self.sendRequest(to: .reminder(id: reminder.id), method: .PUT, body: self.jsonEncoder.encode(reminder))
+        
+        let response = try self.jsonDecoder.decode(WrappedObject<Reminder>.self, from: data)
+        return response.result
+    }
+    
+    /**
+     Delete a reminder
+     - Parameter reminder: Reminder to delete
+     */
+    func deleteReminder(_ reminder: Reminder) async throws {
+        _ = try await self.sendRequest(to: .reminder(id: reminder.id), method: .DELETE)
+    }
+    
+    /**
+     Mark a reminder complete (creates timeline entry)
+     - Parameter reminder: Reminder to mark completed
+     */
+    func completeReminder(_ reminder: Reminder) async throws {
+        _ = try await self.sendRequest(to: .completeReminder(id: reminder.id), method: .POST)
+    }
+    
+    /**
+     Get reminders for a contact
+     - Parameter contact: Contact to get reminders for
+     
+     - Returns: Reminders for that contact
+     */
+    func getContactReminders(_ contact: Contact) async throws -> [Reminder] {
+        let data = try await self.sendRequest(to: .contactReminders(contactId: contact.id))
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
+        return response.results
+    }
+    
+    /**
+     Create a reminder for a contact
+     - Parameter contact: Contact to get create a reminder for
+     - Parameter reminder: Reminder to create
+     
+     - Returns: Newly created reminder
+     */
+    func createContactReminder(contact: Contact, reminder: Reminder) async throws -> Reminder {
+        let data = try await self.sendRequest(to: .contactReminders(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(reminder))
+        
+        return try self.jsonDecoder.decode(Reminder.self, from: data)
+    }
+    
+    /**
+     List completion history for a contact (timeline entries)
+     - Parameter contact: Contact whose timeline to get
+     
+     - Returns: List of completed reminders for that contact
+     */
+    func getCompletedReminders(for contact: Contact) async throws -> [Reminder] {
+        let data = try await self.sendRequest(to: .completedReminders(contactId: contact.id))
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
+        return response.results
+    }
+    
+    /** Delete a completion entry
+     - Parameter reminder: Reminder to delete
+     */
+    func deleteCompletedReminder(_ reminder: Reminder) async throws {
+        _ = try await self.sendRequest(to: .reminderCompletions(id: reminder.id))
+    }
 }
 
 
