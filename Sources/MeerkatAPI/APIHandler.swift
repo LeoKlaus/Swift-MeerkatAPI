@@ -83,6 +83,8 @@ nonisolated open class ApiHandler {
 
 // MARK: - Convenience Methods
 
+// TODO: Currently the answer schemes for different endpoints vary, but most of these could be handled with a couple of generics
+
 // MARK: Auth
 public extension ApiHandler {
     
@@ -257,7 +259,7 @@ public extension ApiHandler {
      */
      func getContacts(fields: [Contact.CodingKeys] = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> [Contact] {
         let fieldsQueryItem = URLQueryItem(name: "fields", value: fields.map{ $0.rawValue }.joined(separator: ","))
-        let response: PaginatedResponse<Contact> = try await self.get(from: .contacts, parameters: [fieldsQueryItem])
+        let response: PaginatedResponse<Contact> = try await self.get(from: .contacts, parameters: [fieldsQueryItem, URLQueryItem(limit: limit), URLQueryItem(page: page)])
         return response.results
     }
     
@@ -440,23 +442,162 @@ public extension ApiHandler {
 
 // MARK: Note Endpoints
 public extension ApiHandler {
-    /// List notes for a contact (GET/POST)
-    //case contactNotes(contactId: Int)
-    /// List unassigned notes (GET/POST)
-    //case unassignedNotes
-    /// Get a note (GET/PUT/DELETE)
-    //case note(id: Int)
+    /**
+     Get all notes for a contact
+     - Parameter contact: Contact whose notes should be shown
+     
+     - Returns: List of notes for the given contact
+     */
+    func getContactNotes(_ contact: Contact) async throws -> [Note] {
+        let data = try await self.sendRequest(to: .contactNotes(contactId: contact.id))
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data)
+        return response.results
+    }
+    
+    /**
+     Create a note for a contact
+     - Parameter contact: Contact to create a note for
+     - Parameter note: Note to create
+     
+     - Returns: The newly created note
+     */
+    func createContactNote(contact: Contact, note: Note) async throws -> Note {
+        let data = try await self.sendRequest(to: .contactNotes(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(note))
+        
+        let response = try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data)
+        return response.result
+    }
+    
+    /**
+     Get all unassigned notes
+     - Parameter limit: Maximum number of contacts per page
+     - Parameter page: Which page to load (starts at 1!)
+     
+     - Returns: List of unassigned notes
+     */
+    func getUnassignedNotes(limit: Int = 50, page: Int = 1) async throws -> [Note] {
+        let data = try await self.sendRequest(to: .unassignedNotes, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data)
+        return response.results
+    }
+    
+    /**
+     Create an unassigned note
+     - Parameter note: The note to create
+     
+     - Returns: The newly created note
+     */
+    func createUnassignedNote(_ note: Note) async throws -> Note {
+        let data = try await self.sendRequest(to: .unassignedNotes, method: .POST, body: self.jsonEncoder.encode(note))
+        
+        let response = try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data)
+        return response.result
+    }
+    
+    
+    /**
+     Get a note
+     - Returns: Note with the given id
+     */
+    func getNote(_ id: Int) async throws -> Note {
+        return try await self.get(from: .note(id: id))
+    }
+    
+    /**
+     Update a note
+     - Parameter note: Note to update
+     
+     - Returns: The updated note
+     */
+    func updateNote(_ note: Note) async throws -> Note {
+        let data = try await self.sendRequest(to: .note(id: note.id), method: .PUT, body: self.jsonEncoder.encode(note))
+        
+        let response = try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data)
+        return response.result
+    }
+    
+    /**
+     Delete a note
+     - Parameter note: Note to delete
+     */
+    func deleteNote(_ note: Note) async throws {
+        _ = try await self.sendRequest(to: .note(id: note.id), method: .DELETE)
+    }
 }
 
 
 // MARK: Activity Endpoints
 public extension ApiHandler {
-    /// List all activities (GET/POST)
-    //case activities
-    /// Get an activity (GET/PUT/DELETE)
-    //case activity(id: Int)
-    /// List activities for a contact (GET)
-    //case contactActivities(contactId: Int)
+    /**
+     Get all activities
+     - Parameter limit: Maximum number of contacts per page
+     - Parameter page: Which page to load (starts at 1!)
+     
+     - Returns: List of activities
+     */
+    func getActivities(limit: Int = 50, page: Int = 1) async throws -> [Activity] {
+        let data = try await self.sendRequest(to: .activities, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data)
+        return response.results
+    }
+    
+    /**
+     Create an activity
+     - Parameter activity: The activity to create
+     
+     - Returns: The newly created note
+     */
+    func createActivity(_ note: Activity) async throws -> Activity {
+        let data = try await self.sendRequest(to: .activities, method: .POST, body: self.jsonEncoder.encode(note))
+        
+        let response = try self.jsonDecoder.decode(WrappedObject<Activity>.self, from: data)
+        return response.result
+    }
+    
+    /**
+     Get an activity
+     - Returns: Activity with the given id
+     */
+    func getNote(_ id: Int) async throws -> Activity {
+        return try await self.get(from: .activity(id: id))
+    }
+    
+    /**
+     Update an activity
+     - Parameter activity: Activity to update
+     
+     - Returns: The updated activity
+     */
+    func updateNote(_ activity: Activity) async throws -> Activity {
+        let data = try await self.sendRequest(to: .activity(id: activity.id), method: .PUT, body: self.jsonEncoder.encode(activity))
+        
+        let response = try self.jsonDecoder.decode(WrappedObject<Activity>.self, from: data)
+        return response.result
+    }
+    
+    /**
+     Delete an activity
+     - Parameter note: Note to delete
+     */
+    func deleteActivity(_ activity: Activity) async throws {
+        _ = try await self.sendRequest(to: .activity(id: activity.id), method: .DELETE)
+    }
+    
+    /**
+     Get activities for a contact
+     - Parameter contact: Contact whose activities to load
+     
+     - Returns: All activities for that contact
+     */
+    func getContactActivities(_ contact: Contact) async throws -> [Activity] {
+        let data = try await self.sendRequest(to: .contactActivities(contactId: contact.id))
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data)
+        return response.results
+    }
 }
 
 
