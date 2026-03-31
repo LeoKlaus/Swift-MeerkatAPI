@@ -270,7 +270,8 @@ extension ApiHandler {
     public func createContact(_ newContact: Contact) async throws -> Contact {
         let data = try await self.sendRequest(to: .contacts, method: .POST, body: self.jsonEncoder.encode(newContact))
         
-        return try self.jsonDecoder.decode(Contact.self, from: data)
+        let response = try self.jsonDecoder.decode(WrappedObject<Contact>.self, from: data)
+        return response.result
     }
     
     /**
@@ -353,7 +354,7 @@ extension ApiHandler {
     /** Get a contact’s profile picture
      - Parameter contact: The contact whose profile should be loaded
      */
-    public func getContactImage(contact: Contact) async throws -> Data {
+    public func getContactImage(_ contact: Contact) async throws -> Data {
         return try await self.getData(from: .contactImage(id: contact.id))
     }
     
@@ -377,8 +378,30 @@ extension ApiHandler {
 
 // MARK: Relationship Endpoints
 extension ApiHandler {
-    /// List outgoing relationships (GET/POST)
-    //case relationships(contactId: Int)
+    /**
+     List outgoing relationships
+     - Parameter contact: Contact whose relationships should be loaded
+     
+     - Returns: List of outgoing relationships of that contact
+     */
+    public func getRelationships(_ contact: Contact) async throws -> [Relationship] {
+        let response: PaginatedResponse<Relationship> = try await self.get(from: .relationships(contactId: contact.id))
+        return response.results
+    }
+    
+    /**
+     Create outgoing relationships
+     - Parameter contact: Contact to which the relationship should be added
+     - Parameter relationship: The new relationship
+     
+     - Returns: The newly created relationship
+     */
+    public func createRelationship(_ contact: Contact, relationShip: Relationship) async throws -> Relationship {
+        let data = try await self.sendRequest(to: .relationships(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(relationShip))
+        
+        let response = try self.jsonDecoder.decode(WrappedObject<Relationship>.self, from: data)
+        return response.result
+    }
     /// List incoming relationships (GET)
     //case incomingRelationships(contactId: Int)
     /// Update a relationship (PUT/DELETE)

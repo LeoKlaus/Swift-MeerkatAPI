@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct PaginatedResponse<T: Codable>: Codable {
+public struct PaginatedResponse<T: Codable>: Decodable {
     let results: [T]
     let limit: Int?
     let page: Int?
@@ -59,9 +59,5 @@ public struct PaginatedResponse<T: Codable>: Codable {
         self.page = page
         self.total = total
         self.totalPages = totalPages
-    }
-    
-    public func encode(to encoder: any Encoder) throws {
-        throw ApiError.forbidden
     }
 }

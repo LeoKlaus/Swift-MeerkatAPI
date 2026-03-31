@@ -17,7 +17,7 @@ public extension Data {
      
      - Returns: Data representation of the multipart form body
      */
-    public func toMultipartData(boundary: String, fileName: String, mimeType: UTType) throws -> Data {
+    func toMultipartData(boundary: String, fileName: String, mimeType: UTType) throws -> Data {
         var body = Data()
         
         body.append("--\(boundary)\r\n")
