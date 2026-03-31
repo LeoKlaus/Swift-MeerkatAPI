@@ -38,7 +38,7 @@ public struct PaginatedResponse<T: Codable>: Decodable {
         var results: [T] = []
         try dynamicKeysContainer.allKeys.forEach { key in
             switch key.stringValue {
-            case "activities", "birthdays", "contacts", "notes", "relationships", "users":
+            case "activities", "birthdays", "contacts", "notes", "relationships", "incoming_relationships", "users":
                 results = try dynamicKeysContainer.decode([T].self, forKey: key)
             default: break
             }
