@@ -580,7 +580,7 @@ public extension ApiHandler {
     
     /**
      Delete an activity
-     - Parameter note: Note to delete
+     - Parameter activity: Activity to delete
      */
     func deleteActivity(_ activity: Activity) async throws {
         _ = try await self.sendRequest(to: .activity(id: activity.id), method: .DELETE)
@@ -712,17 +712,59 @@ public extension ApiHandler {
 
 // MARK: Graph
 public extension ApiHandler {
-    /// Get contact network graph data (GET)
-    //case graph
+    /** Get contact network graph data
+     - Returns: Graph object containing all nodes and edges of the graph
+     */
+    func getNetworkGraph() async throws -> Graph {
+        return try await self.get(from: .graph)
+    }
 }
 
 
 // MARK: Admin
 public extension ApiHandler {
-    /// List all users (GET)
-    //case users
-    /// Get a user (GET/PATCH/DELETE)
-    //case user(id: Int)
+    /**
+     Get all users
+     - Parameter limit: Maximum number of users per page
+     - Parameter page: Which page to load (starts at 1!)
+     
+     - Returns: List of users
+     */
+    func getUsers(limit: Int = 50, page: Int = 1) async throws -> [User] {
+        let data = try await self.sendRequest(to: .users, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        
+        let response = try self.jsonDecoder.decode(PaginatedResponse<User>.self, from: data)
+        return response.results
+    }
+    
+    
+    /**
+     Get a user
+     - Returns: User with the given id
+     */
+    func getUser(_ id: Int) async throws -> User {
+        return try await self.get(from: .user(id: id))
+    }
+    
+    /**
+     Update a user
+     - Parameter user: User to update
+     
+     - Returns: The updated user
+     */
+    func updateUser(_ user: User) async throws -> User {
+        let data = try await self.sendRequest(to: .user(id: user.id), method: .PATCH, body: self.jsonEncoder.encode(user))
+        
+        return try self.jsonDecoder.decode(User.self, from: data)
+    }
+    
+    /**
+     Delete a user
+     - Parameter user: User to delete
+     */
+    func deleteUser(_ user: User) async throws {
+        _ = try await self.sendRequest(to: .user(id: user.id), method: .DELETE)
+    }
 }
 
 
