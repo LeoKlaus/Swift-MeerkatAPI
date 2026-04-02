@@ -101,6 +101,24 @@ public enum ApiEndpoint {
     /// Delete a completion entry (DELETE)
     case reminderCompletions(id: Int)
     
+    // MARK: Import Endpoints
+    /// Upload a CSV file, returns parsed preview data
+    case importUploadCSV
+    /// Apply column mapping, returns contacts with duplicate detection
+    case importPreviewCSV
+    /// Execute the import with per-row decisions
+    case importConfirmCSV
+    /// Upload a VCF file, returns contacts with duplicate detection
+    case importUploadVCF
+    /// Execute the VCF import
+    case importConfirmVCF
+    
+    // MARK: Export Endpoints
+    /// Download all data as CSV
+    case exportCSV
+    /// Download all contacts as VCF (includes photos)
+    case exportVCF
+    
     // MARK: Graph Endpoints
     /// Get contact network graph data (GET)
     case graph
@@ -191,6 +209,20 @@ public enum ApiEndpoint {
             return apiBasePath + "/contacts/\(contactId)/reminder-completions"
         case .reminderCompletions(let id):
             return apiBasePath + "/reminder-completions/\(id)"
+        case .importUploadCSV:
+            return apiBasePath + "/contacts/import/upload"
+        case .importPreviewCSV:
+            return apiBasePath + "/contacts/import/preview"
+        case .importConfirmCSV:
+            return apiBasePath + "/contacts/import/confirm"
+        case .importUploadVCF:
+            return apiBasePath + "/contacts/import/vcf/upload"
+        case .importConfirmVCF:
+            return apiBasePath + "/contacts/import/vcf/confirm"
+        case .exportCSV:
+            return apiBasePath + "/export"
+        case .exportVCF:
+            return apiBasePath + "/export/vcf"
         case .graph:
             return apiBasePath + "/graph"
         case .users:

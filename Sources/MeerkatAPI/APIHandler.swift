@@ -363,7 +363,7 @@ public extension ApiHandler {
     /**
      Upload an image for a contact
      - Parameter contact: The contact this image sohuld be assigned to
-     - Parameter imageData: Binary data for the image
+     - Parameter imageURL: URL to the image file
      
      - Returns: The updated contact
      */
@@ -706,6 +706,127 @@ public extension ApiHandler {
      */
     func deleteCompletedReminder(_ reminder: Reminder) async throws {
         _ = try await self.sendRequest(to: .reminderCompletions(id: reminder.id))
+    }
+}
+
+// MARK: Import
+public extension ApiHandler {
+    /**
+    Upload a CSV file, returns parsed preview data
+     - Parameter csvData: Data representation of the CSV file to upload
+     
+     - Returns: UploadPreviewResponse
+     */
+    func uploadCsvImport(_ csvData: Data) async throws -> ImportUploadResponse {
+        let boundary = UUID().uuidString
+        let body = try csvData.toMultipartData(boundary: boundary, fileName: "import.csv", mimeType: .delimitedText)
+        
+        let data = try await self.sendRequest(to: .importUploadCSV, method: .POST, body: body, multipartBoundary: boundary)
+        
+        return try self.jsonDecoder.decode(ImportUploadResponse.self, from: data)
+    }
+    
+    /**
+     Upload a CSV file, returns parsed preview data
+     - Parameter csvURL: URL of the CSV file to upload
+     
+     - Returns: UploadPreviewResponse
+     */
+    func uploadCsvImport(_ csvURL: URL) async throws -> ImportUploadResponse {
+        let boundary = UUID().uuidString
+        let body = try csvURL.toMultipartData(with: boundary)
+        
+        let data = try await self.sendRequest(to: .importUploadCSV, method: .POST, body: body, multipartBoundary: boundary)
+        
+        return try self.jsonDecoder.decode(ImportUploadResponse.self, from: data)
+    }
+    
+    
+    /**
+     Apply column mapping, returns contacts with duplicate detection (POST)
+     - Parameter request: ImportPreviewRequest for the import
+     
+     - Returns: ImportPreviewResponse
+     */
+    func previewCsvUpload(_ request: ImportPreviewRequest) async throws -> ImportPreviewResponse {
+        let data = try await self.sendRequest(to: .importPreviewCSV, method: .POST, body: self.jsonEncoder.encode(request))
+        
+        return try self.jsonDecoder.decode(ImportPreviewResponse.self, from: data)
+    }
+    
+    /**
+     Execute the import with per-row decisions (POST)
+     - Parameter request: ImportConfirmRequest
+     
+     - Returns: ImportResult
+     */
+    func confirmCsvUpload(_ request: ImportConfirmRequest) async throws -> ImportResult {
+        let data = try await self.sendRequest(to: .importConfirmCSV, method: .POST, body: self.jsonEncoder.encode(request))
+        
+        return try self.jsonDecoder.decode(ImportResult.self, from: data)
+    }
+    
+    /**
+     Upload a VCF file, returns contacts with duplicate detection (POST/Multipart form)
+     - Parameter vcfData: Data representation of the VCF file to upload
+     
+     - Returns: UploadPreviewResponse
+     */
+    func uploadVcfImport(_ vcfData: Data) async throws -> ImportUploadResponse {
+        let boundary = UUID().uuidString
+        let body = try vcfData.toMultipartData(boundary: boundary, fileName: "import.vcf", mimeType: .delimitedText)
+        
+        let data = try await self.sendRequest(to: .importUploadVCF, method: .POST, body: body, multipartBoundary: boundary)
+        
+        return try self.jsonDecoder.decode(ImportUploadResponse.self, from: data)
+    }
+    
+    /**
+     Upload a VCF file, returns contacts with duplicate detection (POST/Multipart form)
+     - Parameter vcfURL: Data representation of the VCF file to upload
+     
+     - Returns: UploadPreviewResponse
+     */
+    func uploadVcfImport(_ vcfURL: URL) async throws -> ImportUploadResponse {
+        let boundary = UUID().uuidString
+        let body = try vcfURL.toMultipartData(with: boundary)
+        
+        let data = try await self.sendRequest(to: .importUploadVCF, method: .POST, body: body, multipartBoundary: boundary)
+        
+        return try self.jsonDecoder.decode(ImportUploadResponse.self, from: data)
+    }
+    
+    /**
+     Execute the VCF import (POST)
+     - Parameter request: ImportConfirmRequest
+     
+     - Returns: ImportResult
+     */
+    func confirmVcfUpload(_ request: ImportConfirmRequest) async throws -> ImportResult {
+        let data = try await self.sendRequest(to: .importConfirmVCF, method: .POST, body: self.jsonEncoder.encode(request))
+        
+        return try self.jsonDecoder.decode(ImportResult.self, from: data)
+    }
+}
+
+// MARK: Export
+public extension ApiHandler {
+    /**
+     Download all data as CSV
+     - Returns: Data of the CSV file
+     */
+    func exportCSV() async throws -> Data {
+        let data = try await self.sendRequest(to: .exportCSV)
+        return data
+    }
+    
+    /**
+     Download all contacts as VCF (includes photos)
+     - Returns: Data of the VCF file
+     */
+    func exportVCF() async throws -> Data {
+        let data = try await self.sendRequest(to: .exportVCF)
+        return data
     }
 }
 
