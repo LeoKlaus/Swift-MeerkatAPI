@@ -247,6 +247,7 @@ public extension ApiHandler {
 
 // MARK: Contacts
 public extension ApiHandler {
+    
     /**
      List contacts
      - Parameter fields: Fields to include with the response (defaults are sensible)
@@ -278,7 +279,6 @@ public extension ApiHandler {
     
     /**
      Get a contact
-     
      - Returns: The contact with the given id
      */
     func getContact(id: Int) async throws -> Contact {
@@ -327,9 +327,9 @@ public extension ApiHandler {
         
         return try self.jsonDecoder.decode(Contact.self, from: data)
     }
+    
     /**
      List all circles in use
-     
      - Returns: A list of all currently used circles
      */
     func getCircles() async throws -> [String] {
@@ -338,7 +338,6 @@ public extension ApiHandler {
     
     /**
      Get five random contacts
-     
      - Returns: Up to five random contacts
      */
     func getRandomContacts() async throws -> [Contact] {
@@ -347,7 +346,10 @@ public extension ApiHandler {
         return response.results
     }
     
-    /// Get upcoming birthdays
+    /**
+     Get upcoming birthdays
+     - Returns: List of upcoming birthdays
+     */
     func getUpcomingBirthdays() async throws -> [Birthday] {
         let response: PaginatedResponse<Birthday> = try await self.get(from: .birthdays)
         return response.results
@@ -380,6 +382,7 @@ public extension ApiHandler {
 
 // MARK: Relationship Endpoints
 public extension ApiHandler {
+    
     /**
      List outgoing relationships
      - Parameter contact: Contact whose relationships should be loaded
@@ -442,6 +445,7 @@ public extension ApiHandler {
 
 // MARK: Note Endpoints
 public extension ApiHandler {
+    
     /**
      Get all notes for a contact
      - Parameter contact: Contact whose notes should be shown
@@ -530,6 +534,7 @@ public extension ApiHandler {
 
 // MARK: Activity Endpoints
 public extension ApiHandler {
+    
     /**
      Get all activities
      - Parameter limit: Maximum number of contacts per page
@@ -603,6 +608,7 @@ public extension ApiHandler {
 
 // MARK: Reminder Endpoints
 public extension ApiHandler {
+    
     /**
      Get all reminders
      - Returns: List of reminders
@@ -711,6 +717,7 @@ public extension ApiHandler {
 
 // MARK: Import
 public extension ApiHandler {
+    
     /**
     Upload a CSV file, returns parsed preview data
      - Parameter csvData: Data representation of the CSV file to upload
@@ -740,7 +747,6 @@ public extension ApiHandler {
         
         return try self.jsonDecoder.decode(ImportUploadResponse.self, from: data)
     }
-    
     
     /**
      Apply column mapping, returns contacts with duplicate detection (POST)
@@ -811,6 +817,7 @@ public extension ApiHandler {
 
 // MARK: Export
 public extension ApiHandler {
+    
     /**
      Download all data as CSV
      - Returns: Data of the CSV file
@@ -833,6 +840,7 @@ public extension ApiHandler {
 
 // MARK: Graph
 public extension ApiHandler {
+    
     /** Get contact network graph data
      - Returns: Graph object containing all nodes and edges of the graph
      */
@@ -844,6 +852,7 @@ public extension ApiHandler {
 
 // MARK: Admin
 public extension ApiHandler {
+    
     /**
      Get all users
      - Parameter limit: Maximum number of users per page
@@ -857,7 +866,6 @@ public extension ApiHandler {
         let response = try self.jsonDecoder.decode(PaginatedResponse<User>.self, from: data)
         return response.results
     }
-    
     
     /**
      Get a user
