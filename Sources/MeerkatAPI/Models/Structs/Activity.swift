@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Activity: Codable {
+public struct Activity: Codable, Hashable, Identifiable {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?

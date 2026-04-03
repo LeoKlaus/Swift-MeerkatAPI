@@ -572,4 +572,53 @@ import Foundation
         #expect(response.total == 1)
         #expect(response.totalPages == 1)
     }
+    
+    @Test func testDecodeTokens() throws {
+        let json = """
+        {
+            "tokens": [
+                {
+                    "id": 2,
+                    "name": "Test-Token",
+                    "created_at": "2026-04-03T20:22:13.873608799Z",
+                    "last_used_at": null,
+                    "revoked_at": null
+                },
+                {
+                    "id": 1,
+                    "name": "Test",
+                    "created_at": "2026-04-03T20:07:51.770066687Z",
+                    "last_used_at": "2026-04-03T20:22:18.595507617Z",
+                    "revoked_at": "2026-04-03T20:29:47.659135793Z"
+                }
+            ]
+        }
+        """
+        
+        let jsonData = Data(json.utf8)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        let response = try decoder.decode(PaginatedResponse<TokenResponse>.self, from: jsonData)
+        
+        #expect(response.results.count == 2)
+        
+        let firstToken = response.results[0]
+        let secondToken = response.results[1]
+        
+        #expect(firstToken.id == 2)
+        #expect(firstToken.name == "Test-Token")
+        #expect(firstToken.createdAt.timeIntervalSince1970 == 1775247733.8736088)
+        #expect(firstToken.lastUsedAt == nil)
+        #expect(firstToken.revokedAt == nil)
+        #expect(firstToken.token == nil)
+        
+        #expect(secondToken.id == 1)
+        #expect(secondToken.name == "Test")
+        #expect(secondToken.createdAt.timeIntervalSince1970 == 1775246871.7700667)
+        #expect(secondToken.lastUsedAt?.timeIntervalSince1970 == 1775247738.5955076)
+        #expect(secondToken.revokedAt?.timeIntervalSince1970 == 1775248187.6591358)
+        #expect(secondToken.token == nil)
+    }
 }

@@ -8,11 +8,11 @@
 import Foundation
 
 public struct PaginatedResponse<T: Codable>: Decodable {
-    let results: [T]
-    let limit: Int?
-    let page: Int?
-    let total: Int?
-    let totalPages: Int?
+    public let results: [T]
+    public let limit: Int?
+    public let page: Int?
+    public let total: Int?
+    public let totalPages: Int?
     
     enum CodingKeys: String, CodingKey {
         case total
@@ -38,7 +38,7 @@ public struct PaginatedResponse<T: Codable>: Decodable {
         var results: [T] = []
         try dynamicKeysContainer.allKeys.forEach { key in
             switch key.stringValue {
-            case "activities", "birthdays", "completions", "contacts", "notes", "relationships", "incoming_relationships", "reminders", "users":
+            case "activities", "birthdays", "completions", "contacts", "notes", "relationships", "incoming_relationships", "reminders", "users", "tokens":
                 results = try dynamicKeysContainer.decode([T].self, forKey: key)
             default: break
             }

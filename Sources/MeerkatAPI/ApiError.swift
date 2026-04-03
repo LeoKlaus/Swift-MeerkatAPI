@@ -9,10 +9,9 @@
 import Foundation
 
 public enum ApiError: Error, Sendable {
-    case noCredentials
+    case unauthorized
     case forbidden
     case notFound
     case invalidResponse(Data, URLResponse?)
     case unexpectedHTTPStatus(Data, Int)
-    case couldntSerializeDocument
 }

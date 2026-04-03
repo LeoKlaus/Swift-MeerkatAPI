@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Contact: Codable, Identifiable {
+public struct Contact: Codable, Identifiable, Hashable {
     public let id: Int
     public let createdAt: Date?
     public let updatedAt: Date?
@@ -20,7 +20,7 @@ public struct Contact: Codable, Identifiable {
     public let phone: String?
     public let birthday: String?
     public let photo: String?
-    public let relationships: String? // TODO: What is this?
+    public let relationships: [Relationship]?
     public let address: String?
     public let howWeMet: String?
     public let foodPreference: String?
@@ -56,7 +56,7 @@ public struct Contact: Codable, Identifiable {
         case photoThumbnail = "photo_thumbnail"
     }
     
-    public init(id: Int, createdAt: Date?, updatedAt: Date?, deletedAt: Date?, firstname: String, lastname: String?, nickname: String?, gender: Gender?, email: String?, phone: String?, birthday: String?, photo: String?, relationships: String?, address: String?, howWeMet: String?, foodPreference: String?, workInformation: String?, contactInformation: String?, circles: [String]?, customFields: [String : String]?, archived: Bool, photoThumbnail: String?) {
+    public init(id: Int, createdAt: Date?, updatedAt: Date?, deletedAt: Date?, firstname: String, lastname: String?, nickname: String?, gender: Gender?, email: String?, phone: String?, birthday: String?, photo: String?, relationships: [Relationship]?, address: String?, howWeMet: String?, foodPreference: String?, workInformation: String?, contactInformation: String?, circles: [String]?, customFields: [String : String]?, archived: Bool, photoThumbnail: String?) {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt

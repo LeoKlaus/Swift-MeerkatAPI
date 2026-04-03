@@ -53,15 +53,19 @@ nonisolated open class ApiHandler {
         let (data, response) = try await self.session.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse {
-            if 200...299 ~= httpResponse.statusCode {
+            switch httpResponse.statusCode {
+            case 200...299:
                 return data
-            } else if 403 == httpResponse.statusCode {
+            case 401:
+                Self.logger.error("Server returned 401:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)")
+                throw ApiError.unauthorized
+            case 403:
                 Self.logger.error("Server returned 403:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)")
                 throw ApiError.forbidden
-            } else if 404 == httpResponse.statusCode {
+            case 404:
                 Self.logger.error("Server returned 404:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)")
                 throw ApiError.notFound
-            } else {
+            default:
                 Self.logger.error("Server returned unexpected status code \(httpResponse.statusCode, privacy: .public) and response:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)\nQueried endpoint: \(endpoint.toPath(), privacy: .public)")
                 throw ApiError.unexpectedHTTPStatus(data, httpResponse.statusCode)
             }
@@ -258,10 +262,9 @@ public extension ApiHandler {
      
      - Returns: List of contacts
      */
-     func getContacts(fields: [Contact.CodingKeys] = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> [Contact] {
+     func getContacts(fields: [Contact.CodingKeys] = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> PaginatedResponse<Contact> {
         let fieldsQueryItem = URLQueryItem(name: "fields", value: fields.map{ $0.rawValue }.joined(separator: ","))
-        let response: PaginatedResponse<Contact> = try await self.get(from: .contacts, parameters: [fieldsQueryItem, URLQueryItem(limit: limit), URLQueryItem(page: page)])
-        return response.results
+        return try await self.get(from: .contacts, parameters: [fieldsQueryItem, URLQueryItem(limit: limit), URLQueryItem(page: page)])
     }
     
     /**
@@ -480,11 +483,8 @@ public extension ApiHandler {
      
      - Returns: List of unassigned notes
      */
-    func getUnassignedNotes(limit: Int = 50, page: Int = 1) async throws -> [Note] {
-        let data = try await self.sendRequest(to: .unassignedNotes, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
-        
-        let response = try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data)
-        return response.results
+    func getUnassignedNotes(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Note> {
+        return try await self.get(from: .unassignedNotes, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
     }
     
     /**
@@ -542,11 +542,8 @@ public extension ApiHandler {
      
      - Returns: List of activities
      */
-    func getActivities(limit: Int = 50, page: Int = 1) async throws -> [Activity] {
-        let data = try await self.sendRequest(to: .activities, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
-        
-        let response = try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data)
-        return response.results
+    func getActivities(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Activity> {
+        return try await self.get(from: .activities, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
     }
     
     /**
@@ -625,9 +622,8 @@ public extension ApiHandler {
      - Returns: List of reminders
      */
     func getUpcomingReminders() async throws -> [Reminder] {
-        let data = try await self.sendRequest(to: .upcomingReminders)
+        let response: PaginatedResponse<Reminder> = try await self.get(from: .upcomingReminders)
         
-        let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
         return response.results
     }
     
@@ -849,6 +845,40 @@ public extension ApiHandler {
     }
 }
 
+// MARK: Tokens
+public extension ApiHandler {
+    /**
+     List all API tokens for the current user (requires cookie auth!)
+     - Returns: All API tokens for the current user
+     */
+    func getApiTokens() async throws -> PaginatedResponse<TokenResponse> {
+        return try await self.get(from: .apiTokens)
+    }
+    
+    /**
+     Create an API token — returns the plaintext token once
+     - Parameter name: Name for the API token
+     
+     - Returns: TokenResponse containing the token
+     */
+    func createApiToken(_ name: String) async throws -> TokenResponse {
+        let bodyDict = [
+            "Name": name
+        ]
+        
+        let data = try await self.sendRequest(to: .apiTokens, method: .POST, body: self.jsonEncoder.encode(bodyDict))
+        
+        return try self.jsonDecoder.decode(TokenResponse.self, from: data)
+    }
+    
+    /**
+     Revoke an API token
+     - Parameter id: ID of the API token to revoke
+     */
+    func revokeApiToken(_ id: Int) async throws {
+        _ = try await self.sendRequest(to: .apiToken(id: id), method: .DELETE)
+    }
+}
 
 // MARK: Admin
 public extension ApiHandler {

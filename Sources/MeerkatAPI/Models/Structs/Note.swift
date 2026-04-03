@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Note: Codable {
+public struct Note: Codable, Identifiable, Hashable {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Reminder: Codable, Identifiable {
+public struct Reminder: Codable, Identifiable, Hashable {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?

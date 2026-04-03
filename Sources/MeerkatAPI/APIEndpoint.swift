@@ -123,6 +123,12 @@ public enum ApiEndpoint {
     /// Get contact network graph data (GET)
     case graph
     
+    // MARK: Token Endpoints
+    /// List all API tokens for the current user (GET/POST)
+    case apiTokens
+    /// Revoke an API token (DELETE)
+    case apiToken(id: Int)
+    
     // MARK: Admin Endpoints
     /// List all users (GET)
     case users
@@ -225,6 +231,10 @@ public enum ApiEndpoint {
             return apiBasePath + "/export/vcf"
         case .graph:
             return apiBasePath + "/graph"
+        case .apiTokens:
+            return apiBasePath + "/admin/api-tokens"
+        case .apiToken(let id):
+            return apiBasePath + "/admin/api-tokens/\(id)"
         case .users:
             return apiBasePath + "/admin/users"
         case .user(let id):

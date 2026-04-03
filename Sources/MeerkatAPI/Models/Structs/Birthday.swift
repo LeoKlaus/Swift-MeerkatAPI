@@ -13,7 +13,7 @@ public enum BirthdayType: String, Codable {
     case none = ""
 }
 
-public struct Birthday: Codable {
+public struct Birthday: Codable, Hashable {
     public let type: BirthdayType
     public let name: String
     public let birthday: String
