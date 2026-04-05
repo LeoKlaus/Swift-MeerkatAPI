@@ -16,15 +16,21 @@ nonisolated open class ApiHandler {
     )
     
     public let serverURL: URL
+    private let token: String
     
     let session: URLSession
+    
     let jsonDecoder: JSONDecoder
     let jsonEncoder: JSONEncoder
     
-    nonisolated public init(serverURL: URL) {
+    nonisolated public init(serverURL: URL, token: String) {
         self.serverURL = serverURL
+        self.token = token
         
-        self.session = URLSession.shared
+        let sessionConfiguration = URLSessionConfiguration.ephemeral
+        sessionConfiguration.httpShouldSetCookies = false
+        
+        self.session = URLSession(configuration: sessionConfiguration)
         
         self.jsonDecoder = JSONDecoder()
         self.jsonDecoder.dateDecodingStrategy = .iso8601
@@ -41,6 +47,7 @@ nonisolated open class ApiHandler {
         request.httpBody = body
         
         request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("Bearer \(self.token)", forHTTPHeaderField: "Authorization")
         
         if let multipartBoundary {
             request.addValue("multipart/form-data; boundary=\(multipartBoundary)", forHTTPHeaderField: "Content-Type")
@@ -87,15 +94,15 @@ nonisolated open class ApiHandler {
 
 // MARK: - Convenience Methods
 
-// TODO: Currently the answer schemes for different endpoints vary, but most of these could be handled with a couple of generics
+// TODO: Currently the answer schemes for different endpoints vary (not all are paginated), but most of these could be handled with a couple of generics
 
 // MARK: Auth
 public extension ApiHandler {
     
     /**
      Create a new user account
-     - Parameter username:      minimum 3 characters
-     - Parameter mailAddress:
+     - Parameter username:      minimum 1 characters
+     - Parameter mailAddress:   Email address of the user
      - Parameter password:      minimum 8 characters, can be tested beforehand using `checkPasswordStrength(String)`
      - Parameter language:      InterfaceLanguage (currently either `en` or `de`)
      */
@@ -108,7 +115,27 @@ public extension ApiHandler {
         ]
         
         // Just returns a success message and a 201
-        _ = try await self.sendRequest(to: .register, method: .POST, body: try self.jsonEncoder.encode(credentials))
+        _ = try await self.sendRequest(to: .register, method: .POST, body: try JSONEncoder().encode(credentials))
+    }
+    
+    /**
+     Create a new user account
+     - Parameter serverURL:     URL of the server
+     - Parameter username:      minimum 1 characters
+     - Parameter mailAddress:   Email address of the user
+     - Parameter password:      minimum 8 characters, can be tested beforehand using `checkPasswordStrength(String)`
+     - Parameter language:      InterfaceLanguage (currently either `en` or `de`)
+     */
+    static func register(serverURL: URL, username: String, password: String, mailAddress: String, language: InterfaceLanguage) async throws {
+        let credentials = [
+            "Username": username,
+            "Email": mailAddress,
+            "Password": password,
+            "Language": language.rawValue
+        ]
+        
+        // Just returns a success message and a 201
+        _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .register, method: .POST, body: try JSONEncoder().encode(credentials))
     }
     
     /**
@@ -127,6 +154,14 @@ public extension ApiHandler {
         let data = try await self.sendRequest(to: .login, method: .POST, body: self.jsonEncoder.encode(credentials))
         
         return try self.jsonDecoder.decode(LoginResponse.self, from: data)
+    }
+    
+    /**
+     Clear current session cookie
+     - Parameter serverURL: URL of the server
+     */
+    static func logout(_ serverURL: URL) async throws {
+        _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .logout, method: .POST)
     }
     
     /**
@@ -153,6 +188,23 @@ public extension ApiHandler {
     }
     
     /**
+     Validate a password without registering
+     - Parameter serverURL: URL of the server
+     - Parameter password: Password to check
+     
+     - Returns: PasswordStrengthResponse for the given password
+     */
+    static func checkPasswordStrength(serverURL: URL, password: String) async throws -> PasswordStrengthResponse {
+        let passwordDict = [
+            "Password": password
+        ]
+        
+        let data = try await Self.sendRequest(serverURL: serverURL, endpoint: .checkPasswordStrength, method: .POST, body: JSONEncoder().encode(passwordDict))
+        
+        return try JSONDecoder().decode(PasswordStrengthResponse.self, from: data)
+    }
+    
+    /**
      Send a password reset email
      - Parameter mailAddress: Mail address of the user whos password should be reset
      */
@@ -162,6 +214,34 @@ public extension ApiHandler {
         ]
         
         _ = try await self.sendRequest(to: .requestPasswordReset, method: .POST, body: self.jsonEncoder.encode(mailDict))
+    }
+    
+    /**
+     Send a password reset email
+     - Parameter serverURL:     URL of the server
+     - Parameter mailAddress: Mail address of the user whos password should be reset
+     */
+    static func requestPasswordReset(serverURL: URL, mailAddress: String) async throws {
+        let mailDict = [
+            "Email": mailAddress
+        ]
+        
+        _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .requestPasswordReset, method: .POST, body: JSONEncoder().encode(mailDict))
+    }
+    
+    /**
+     Apply a password reset token
+     - Parameter serverURL: URL of the server     
+     - Parameter token: Token from the password reset mail
+     - Parameter newPassword: New password for the user
+     */
+    static func confirmPasswordReset(serverURL: URL, token: String, newPassword: String) async throws {
+        let tokenPassDict = [
+            "Token": token,
+            "Password": newPassword
+        ]
+        
+        _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .confirmPasswordReset, method: .POST, body: JSONEncoder().encode(tokenPassDict))
     }
     
     /**
@@ -345,7 +425,7 @@ public extension ApiHandler {
      */
     func getRandomContacts() async throws -> [Contact] {
         // TODO: Check if this gets support for fields in the future
-        let response: PaginatedResponse<Contact> = try await self.get(from: .contacts)
+        let response: PaginatedResponse<Contact> = try await self.get(from: .random)
         return response.results
     }
     
@@ -845,38 +925,107 @@ public extension ApiHandler {
     }
 }
 
-// MARK: Tokens
+// MARK: Tokens (Static)
 public extension ApiHandler {
+    private static func sendRequest(serverURL: URL, endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil) async throws -> Data {
+        
+        var request = URLRequest(url: serverURL.appendingApiPath(endpoint))
+        
+        request.httpMethod = method.rawValue
+        request.httpBody = body
+        
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        Self.logger.debug("Sending \(method.rawValue, privacy: .public) request to \(endpoint.toPath(), privacy: .public)")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse {
+            switch httpResponse.statusCode {
+            case 200...299:
+                return data
+            case 401:
+                Self.logger.error("Server returned 401:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)")
+                throw ApiError.unauthorized
+            case 403:
+                Self.logger.error("Server returned 403:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)")
+                throw ApiError.forbidden
+            case 404:
+                Self.logger.error("Server returned 404:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)")
+                throw ApiError.notFound
+            default:
+                Self.logger.error("Server returned unexpected status code \(httpResponse.statusCode, privacy: .public) and response:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)\nQueried endpoint: \(endpoint.toPath(), privacy: .public)")
+                throw ApiError.unexpectedHTTPStatus(data, httpResponse.statusCode)
+            }
+        }
+        
+        Self.logger.error("Server returned unexpected response:\n\(String(data: data, encoding: .utf8) ?? "", privacy: .public)")
+        throw ApiError.invalidResponse(data, response)
+    }
+    
     /**
-     List all API tokens for the current user (requires cookie auth!)
+     Login and store auth cookie for this session of the app.
+     Some operations, like managing tokens require a session cookie.
+     - Parameter serverURL: URL of the server
+     - Parameter username: Username or email of the user
+     - Parameter password: Password
+     
+     - Returns: LoginResponse, if login was successful
+     */
+    static func login(serverURL: URL, username: String, password: String) async throws -> LoginResponse {
+        let credentials = [
+            "identifier": username,
+            "password": password
+        ]
+        
+        let data = try await Self.sendRequest(serverURL: serverURL, endpoint: .login, method: .POST, body: JSONEncoder().encode(credentials))
+        return try JSONDecoder().decode(LoginResponse.self, from: data)
+    }
+    
+    /**
+     List all API tokens for the current user.
+     Requires session cookie, call `.login()` first!
      - Returns: All API tokens for the current user
      */
-    func getApiTokens() async throws -> PaginatedResponse<TokenResponse> {
-        return try await self.get(from: .apiTokens)
+    static func getApiTokens(_ serverURL: URL) async throws -> PaginatedResponse<TokenResponse> {
+        let data = try await Self.sendRequest(serverURL: serverURL, endpoint: .apiTokens)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        return try decoder.decode(PaginatedResponse<TokenResponse>.self, from: data)
     }
     
     /**
      Create an API token — returns the plaintext token once
+     Requires session cookie, call `.login()` first!
+     - Parameter serverURL: URL of the server
      - Parameter name: Name for the API token
      
      - Returns: TokenResponse containing the token
      */
-    func createApiToken(_ name: String) async throws -> TokenResponse {
+    static func createApiToken(serverURL: URL, name: String) async throws -> TokenResponse {
         let bodyDict = [
             "Name": name
         ]
         
-        let data = try await self.sendRequest(to: .apiTokens, method: .POST, body: self.jsonEncoder.encode(bodyDict))
+        let data = try await Self.sendRequest(serverURL: serverURL, endpoint: .apiTokens, method: .POST, body: JSONEncoder().encode(bodyDict))
         
-        return try self.jsonDecoder.decode(TokenResponse.self, from: data)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        return try decoder.decode(TokenResponse.self, from: data)
     }
     
     /**
      Revoke an API token
+     Requires session cookie, call `.login()` first!
+     - Parameter serverURL: URL of the server
      - Parameter id: ID of the API token to revoke
      */
-    func revokeApiToken(_ id: Int) async throws {
-        _ = try await self.sendRequest(to: .apiToken(id: id), method: .DELETE)
+    static func revokeApiToken(serverURL: URL, id: Int) async throws {
+        _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .apiToken(id: id), method: .DELETE)
     }
 }
 
@@ -937,5 +1086,19 @@ public extension ApiHandler {
         let data = try await self.sendRequest(to: .health)
         
         return try self.jsonDecoder.decode(HealthStatus.self, from: data)
+    }
+    
+    /**
+     Health check
+     - Parameter serverURL: URL of the server
+     - Returns: Health status for the server
+     */
+    static func checkHealth(_ serverURL: URL) async throws -> HealthStatus {
+        let data = try await self.sendRequest(serverURL: serverURL, endpoint: .health)
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        return try decoder.decode(HealthStatus.self, from: data)
     }
 }
