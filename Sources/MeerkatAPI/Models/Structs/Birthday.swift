@@ -16,7 +16,7 @@ public enum BirthdayType: String, Codable {
 public struct Birthday: Codable, Hashable {
     public let type: BirthdayType
     public let name: String
-    public let birthday: String
+    public let birthday: DateComponents
     public let contactId: Int?
     
     enum CodingKeys: String, CodingKey {
@@ -26,10 +26,19 @@ public struct Birthday: Codable, Hashable {
         case contactId = "contact_id"
     }
     
-    public init(type: BirthdayType, name: String, birthday: String, contactId: Int?) {
+    public init(type: BirthdayType, name: String, birthday: DateComponents, contactId: Int?) {
         self.type = type
         self.name = name
         self.birthday = birthday
         self.contactId = contactId
+    }
+    
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = try container.decode(BirthdayType.self, forKey: .type)
+        self.name = try container.decode(String.self, forKey: .name)
+        let birtdayString = try container.decode(String.self, forKey: .birthday)
+        self.birthday = try DateComponents(birtdayString)
+        self.contactId = try container.decodeIfPresent(Int.self, forKey: .contactId)
     }
 }

@@ -77,7 +77,9 @@ import Foundation
         
         #expect(firstBirthday?.type == .contact)
         #expect(firstBirthday?.name == "Matt Smith")
-        #expect(firstBirthday?.birthday == "1982-10-28")
+        #expect(firstBirthday?.birthday.year == 1982)
+        #expect(firstBirthday?.birthday.month == 10)
+        #expect(firstBirthday?.birthday.day == 28)
         #expect(firstBirthday?.contactId == 1)
         
         #expect(response.limit == nil)
