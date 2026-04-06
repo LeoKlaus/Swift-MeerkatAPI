@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Relationship: Codable, Equatable, Hashable {
+public struct Relationship: Codable, Equatable, Hashable, Identifiable {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?
@@ -19,6 +19,7 @@ public struct Relationship: Codable, Equatable, Hashable {
     public let contactId: Int
     public let relatedContactId: Int?
     public let relatedContact: Contact?
+    public let sourceContact: Contact?
     
     enum CodingKeys: String, CodingKey {
         case id = "ID"
@@ -32,6 +33,7 @@ public struct Relationship: Codable, Equatable, Hashable {
         case contactId = "contact_id"
         case relatedContactId = "related_contact_id"
         case relatedContact = "related_contact"
+        case sourceContact = "source_contact"
     }
     
     public init(
@@ -45,7 +47,8 @@ public struct Relationship: Codable, Equatable, Hashable {
         birthday: String?,
         contactId: Int,
         relatedContactId: Int?,
-        relatedContact: Contact?
+        relatedContact: Contact?,
+        sourceContact: Contact?
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -58,5 +61,6 @@ public struct Relationship: Codable, Equatable, Hashable {
         self.contactId = contactId
         self.relatedContactId = relatedContactId
         self.relatedContact = relatedContact
+        self.sourceContact = sourceContact
     }
 }

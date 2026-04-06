@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Activity: Codable, Hashable, Identifiable {
+public struct Activity: Codable, Hashable, Identifiable, TimelineEntry {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?
@@ -16,6 +16,12 @@ public struct Activity: Codable, Hashable, Identifiable {
     public let description: String?
     public let location: String?
     public let date: Date
+    public let contacts: [Contact]?
+    
+    public let uuid = UUID()
+    public var time: Date? {
+        self.date
+    }
     
     enum CodingKeys: String, CodingKey {
         case id = "ID"
@@ -26,6 +32,7 @@ public struct Activity: Codable, Hashable, Identifiable {
         case description
         case location
         case date
+        case contacts
     }
     
     public init(
@@ -36,7 +43,8 @@ public struct Activity: Codable, Hashable, Identifiable {
         title: String,
         description: String? = nil,
         location: String? = nil,
-        date: Date
+        date: Date,
+        contacts: [Contact]? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -46,5 +54,6 @@ public struct Activity: Codable, Hashable, Identifiable {
         self.description = description
         self.location = location
         self.date = date
+        self.contacts = contacts
     }
 }

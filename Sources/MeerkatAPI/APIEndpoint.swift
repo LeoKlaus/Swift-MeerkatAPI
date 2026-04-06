@@ -53,7 +53,7 @@ public enum ApiEndpoint {
     /// List all circles in use (GET)
     case circles
     /// Get five random contacts (GET)
-    case random
+    case randomContacts
     /// Get upcoming birthdays (GET)
     case birthdays
     /// Get a contact’s profile picture (GET/POST)
@@ -175,7 +175,7 @@ public enum ApiEndpoint {
             return apiBasePath + "/contacts/\(id)/unarchive"
         case .circles:
             return apiBasePath + "/contacts/circles"
-        case .random:
+        case .randomContacts:
             return apiBasePath + "/contacts/random"
         case .birthdays:
             return apiBasePath + "/contacts/birthdays"

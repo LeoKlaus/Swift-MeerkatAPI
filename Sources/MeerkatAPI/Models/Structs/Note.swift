@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Note: Codable, Identifiable, Hashable {
+public struct Note: Codable, Identifiable, Hashable, TimelineEntry {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?
@@ -16,6 +16,11 @@ public struct Note: Codable, Identifiable, Hashable {
     public let date: Date?
     public let contactId: Int?
     public let contact: Contact?
+    
+    public let uuid = UUID()
+    public var time: Date? {
+        self.date
+    }
     
     enum CodingKeys: String, CodingKey {
         case id = "ID"

@@ -342,7 +342,7 @@ public extension ApiHandler {
      
      - Returns: List of contacts
      */
-     func getContacts(fields: [Contact.CodingKeys] = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> PaginatedResponse<Contact> {
+     func getContacts(fields: Set<Contact.CodingKeys> = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> PaginatedResponse<Contact> {
         let fieldsQueryItem = URLQueryItem(name: "fields", value: fields.map{ $0.rawValue }.joined(separator: ","))
         return try await self.get(from: .contacts, parameters: [fieldsQueryItem, URLQueryItem(limit: limit), URLQueryItem(page: page)])
     }
@@ -425,7 +425,7 @@ public extension ApiHandler {
      */
     func getRandomContacts() async throws -> [Contact] {
         // TODO: Check if this gets support for fields in the future
-        let response: PaginatedResponse<Contact> = try await self.get(from: .random)
+        let response: PaginatedResponse<Contact> = try await self.get(from: .randomContacts)
         return response.results
     }
     
@@ -536,9 +536,8 @@ public extension ApiHandler {
      - Returns: List of notes for the given contact
      */
     func getContactNotes(_ contact: Contact) async throws -> [Note] {
-        let data = try await self.sendRequest(to: .contactNotes(contactId: contact.id))
+        let response: PaginatedResponse<Note> = try await self.get(from: .contactNotes(contactId: contact.id))
         
-        let response = try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data)
         return response.results
     }
     
@@ -675,9 +674,8 @@ public extension ApiHandler {
      - Returns: All activities for that contact
      */
     func getContactActivities(_ contact: Contact) async throws -> [Activity] {
-        let data = try await self.sendRequest(to: .contactActivities(contactId: contact.id))
+        let response: PaginatedResponse<Activity> = try await self.get(from: .contactActivities(contactId: contact.id))
         
-        let response = try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data)
         return response.results
     }
 }
@@ -751,9 +749,8 @@ public extension ApiHandler {
      - Returns: Reminders for that contact
      */
     func getContactReminders(_ contact: Contact) async throws -> [Reminder] {
-        let data = try await self.sendRequest(to: .contactReminders(contactId: contact.id))
+        let response: PaginatedResponse<Reminder> = try await self.get(from: .contactReminders(contactId: contact.id))
         
-        let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
         return response.results
     }
     
@@ -776,10 +773,9 @@ public extension ApiHandler {
      
      - Returns: List of completed reminders for that contact
      */
-    func getCompletedReminders(for contact: Contact) async throws -> [Reminder] {
-        let data = try await self.sendRequest(to: .completedReminders(contactId: contact.id))
+    func getCompletedReminders(for contact: Contact) async throws -> [ReminderCompletion] {
+        let response: PaginatedResponse<ReminderCompletion> = try await self.get(from: .completedReminders(contactId: contact.id))
         
-        let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
         return response.results
     }
     

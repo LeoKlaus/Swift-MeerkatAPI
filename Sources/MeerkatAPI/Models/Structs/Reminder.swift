@@ -7,6 +7,53 @@
 
 import Foundation
 
+public struct ReminderCompletion: Codable, Identifiable, Hashable, TimelineEntry {
+    public let id: Int
+    public let createdAt: Date?
+    public let updatedAt: Date?
+    public let deletedAt: Date?
+    public let reminderId: Int
+    public let contactId: Int
+    public let message: String
+    public let completedAt: Date
+    
+    public let uuid = UUID()
+    public var time: Date? {
+        self.completedAt
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "ID"
+        case createdAt = "CreatedAt"
+        case updatedAt = "UpdatedAt"
+        case deletedAt = "DeletedAt"
+        case reminderId = "reminder_id"
+        case contactId = "contact_id"
+        case message
+        case completedAt = "completed_at"
+    }
+    
+    public init(
+        id: Int,
+        createdAt: Date?,
+        updatedAt: Date?,
+        deletedAt: Date?,
+        reminderId: Int,
+        contactId: Int,
+        message: String,
+        completedAt: Date
+    ) {
+        self.id = id
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
+        self.reminderId = reminderId
+        self.contactId = contactId
+        self.message = message
+        self.completedAt = completedAt
+    }
+}
+
 public struct Reminder: Codable, Identifiable, Hashable {
     public let id: Int
     public let createdAt: Date
