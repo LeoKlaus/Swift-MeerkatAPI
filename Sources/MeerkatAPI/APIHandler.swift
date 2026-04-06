@@ -8,7 +8,7 @@
 import Foundation
 import OSLog
 
-nonisolated open class ApiHandler {
+final class ApiHandler: Sendable {
     
     private static let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier!,
@@ -23,7 +23,7 @@ nonisolated open class ApiHandler {
     let jsonDecoder: JSONDecoder
     let jsonEncoder: JSONEncoder
     
-    nonisolated public init(serverURL: URL, token: String) {
+    public init(serverURL: URL, token: String) {
         self.serverURL = serverURL
         self.token = token
         
@@ -39,7 +39,7 @@ nonisolated open class ApiHandler {
         self.jsonEncoder.dateEncodingStrategy = .iso8601
     }
     
-    open func sendRequest(to endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil, multipartBoundary: String? = nil, parameters: [URLQueryItem] = []) async throws -> Data {
+    public func sendRequest(to endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil, multipartBoundary: String? = nil, parameters: [URLQueryItem] = []) async throws -> Data {
         
         var request = URLRequest(url: self.serverURL.appendingApiPath(endpoint).appending(queryItems: parameters))
         
@@ -82,23 +82,12 @@ nonisolated open class ApiHandler {
         throw ApiError.invalidResponse(data, response)
     }
     
-    open func get<T: Decodable>(from endpoint: ApiEndpoint, parameters: [URLQueryItem] = []) async throws -> T {
-        let data = try await self.sendRequest(to: endpoint, parameters: parameters)
-        return try self.jsonDecoder.decode(T.self, from: data)
-    }
     
-    open func getData(from endpoint: ApiEndpoint) async throws -> Data {
-        return try await self.sendRequest(to: endpoint)
-    }
-}
-
-// MARK: - Convenience Methods
-
-// TODO: Currently the answer schemes for different endpoints vary (not all are paginated), but most of these could be handled with a couple of generics
-
-// MARK: Auth
-public extension ApiHandler {
+    // MARK: - Convenience Methods
     
+    // TODO: Currently the answer schemes for different endpoints vary (not all are paginated), but most of these could be handled with a couple of generics
+    
+    // MARK: Auth
     /**
      Create a new user account
      - Parameter username:      minimum 1 characters
@@ -231,7 +220,7 @@ public extension ApiHandler {
     
     /**
      Apply a password reset token
-     - Parameter serverURL: URL of the server     
+     - Parameter serverURL: URL of the server
      - Parameter token: Token from the password reset mail
      - Parameter newPassword: New password for the user
      */
@@ -257,17 +246,15 @@ public extension ApiHandler {
         
         _ = try await self.sendRequest(to: .confirmPasswordReset, method: .POST, body: self.jsonEncoder.encode(tokenPassDict))
     }
-}
-
-
-// MARK: User
-public extension ApiHandler {
     
+    
+    // MARK: User
     /** Get the current user
      - Returns: The current user
      */
     func getMe() async throws -> User {
-        return try await self.get(from: .me)
+        let data = try await self.sendRequest(to: .me)
+        return try self.jsonDecoder.decode(User.self, from: data)
     }
     /**
      Change password
@@ -312,7 +299,8 @@ public extension ApiHandler {
      - Returns: CustomFields object containing all custom field names
      */
     func getCustomFields() async throws -> CustomFields {
-        return try await self.get(from: .customFields)
+        let data = try await self.sendRequest(to: .customFields)
+        return try self.jsonDecoder.decode(CustomFields.self, from: data)
     }
     
     /**
@@ -326,12 +314,9 @@ public extension ApiHandler {
         
         return try self.jsonDecoder.decode(CustomFields.self, from: data)
     }
-}
-
-
-// MARK: Contacts
-public extension ApiHandler {
     
+    
+    // MARK: Contacts
     /**
      List contacts
      - Parameter fields: Fields to include with the response (defaults are sensible)
@@ -342,9 +327,11 @@ public extension ApiHandler {
      
      - Returns: List of contacts
      */
-     func getContacts(fields: Set<Contact.CodingKeys> = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> PaginatedResponse<Contact> {
+    func getContacts(fields: Set<Contact.CodingKeys> = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> PaginatedResponse<Contact> {
         let fieldsQueryItem = URLQueryItem(name: "fields", value: fields.map{ $0.rawValue }.joined(separator: ","))
-        return try await self.get(from: .contacts, parameters: [fieldsQueryItem, URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        
+        let data = try await self.sendRequest(to: .contacts, parameters: [fieldsQueryItem, URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        return try self.jsonDecoder.decode(PaginatedResponse<Contact>.self, from: data)
     }
     
     /**
@@ -365,7 +352,8 @@ public extension ApiHandler {
      - Returns: The contact with the given id
      */
     func getContact(id: Int) async throws -> Contact {
-        return try await self.get(from: .contact(id: id))
+        let data = try await self.sendRequest(to: .contact(id: id))
+        return try self.jsonDecoder.decode(Contact.self, from: data)
     }
     
     /**
@@ -416,7 +404,9 @@ public extension ApiHandler {
      - Returns: A list of all currently used circles
      */
     func getCircles() async throws -> [String] {
-        return try await self.get(from: .circles)
+        let data = try await self.sendRequest(to: .circles)
+        
+        return try self.jsonDecoder.decode([String].self, from: data)
     }
     
     /**
@@ -425,8 +415,9 @@ public extension ApiHandler {
      */
     func getRandomContacts() async throws -> [Contact] {
         // TODO: Check if this gets support for fields in the future
-        let response: PaginatedResponse<Contact> = try await self.get(from: .randomContacts)
-        return response.results
+        let data = try await self.sendRequest(to: .randomContacts)
+        
+        return try self.jsonDecoder.decode(PaginatedResponse<Contact>.self, from: data).results
     }
     
     /**
@@ -434,15 +425,16 @@ public extension ApiHandler {
      - Returns: List of upcoming birthdays
      */
     func getUpcomingBirthdays() async throws -> [Birthday] {
-        let response: PaginatedResponse<Birthday> = try await self.get(from: .birthdays)
-        return response.results
+        let data = try await self.sendRequest(to: .birthdays)
+        
+        return try self.jsonDecoder.decode(PaginatedResponse<Birthday>.self, from: data).results
     }
     
     /** Get a contact’s profile picture
      - Parameter contact: The contact whose profile should be loaded
      */
     func getContactImage(_ contact: Contact) async throws -> Data {
-        return try await self.getData(from: .contactImage(id: contact.id))
+        return try await self.sendRequest(to: .contactImage(id: contact.id))
     }
     
     /**
@@ -460,12 +452,9 @@ public extension ApiHandler {
         
         return try self.jsonDecoder.decode(Contact.self, from: data)
     }
-}
-
-
-// MARK: Relationship Endpoints
-public extension ApiHandler {
     
+    
+    // MARK: Relationship Endpoints
     /**
      List outgoing relationships
      - Parameter contact: Contact whose relationships should be loaded
@@ -473,8 +462,9 @@ public extension ApiHandler {
      - Returns: List of outgoing relationships for that contact
      */
     func getOutgoingRelationships(_ contact: Contact) async throws -> [Relationship] {
-        let response: PaginatedResponse<Relationship> = try await self.get(from: .relationships(contactId: contact.id))
-        return response.results
+        let data = try await self.sendRequest(to: .relationships(contactId: contact.id))
+        
+        return try self.jsonDecoder.decode(PaginatedResponse<Relationship>.self, from: data).results
     }
     
     /**
@@ -487,8 +477,7 @@ public extension ApiHandler {
     func createRelationship(contact: Contact, relationShip: Relationship) async throws -> Relationship {
         let data = try await self.sendRequest(to: .relationships(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(relationShip))
         
-        let response = try self.jsonDecoder.decode(WrappedObject<Relationship>.self, from: data)
-        return response.result
+        return try self.jsonDecoder.decode(WrappedObject<Relationship>.self, from: data).result
     }
     
     /**
@@ -498,15 +487,16 @@ public extension ApiHandler {
      - Returns: List of incoming relationships for that contact
      */
     func getIncomingRelationships(_ contact: Contact) async throws -> [Relationship] {
-        let response: PaginatedResponse<Relationship> = try await self.get(from: .incomingRelationships(contactId: contact.id))
-        return response.results
+        let data = try await self.sendRequest(to: .incomingRelationships(contactId: contact.id))
+        
+        return try self.jsonDecoder.decode(PaginatedResponse<Relationship>.self, from: data).results
     }
     
     /**
      Update a relationship
      - Parameter contact: Contact whose relationship should be updated
      - Parameter relationship: The relationship to be updated
-
+     
      - Returns: The updated relationship
      */
     func updateRelationship(contact: Contact, relationship: Relationship) async throws -> Relationship {
@@ -523,12 +513,9 @@ public extension ApiHandler {
     func deleteRelationship(contact: Contact, relationship: Relationship) async throws {
         _ = try await self.sendRequest(to: .updateRelationship(contactId: contact.id, relationshipId: relationship.id), method: .DELETE)
     }
-}
-
-
-// MARK: Note Endpoints
-public extension ApiHandler {
     
+    
+    // MARK: Note Endpoints
     /**
      Get all notes for a contact
      - Parameter contact: Contact whose notes should be shown
@@ -536,9 +523,9 @@ public extension ApiHandler {
      - Returns: List of notes for the given contact
      */
     func getContactNotes(_ contact: Contact) async throws -> [Note] {
-        let response: PaginatedResponse<Note> = try await self.get(from: .contactNotes(contactId: contact.id))
+        let data = try await self.sendRequest(to: .contactNotes(contactId: contact.id))
         
-        return response.results
+        return try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data).results
     }
     
     /**
@@ -563,7 +550,9 @@ public extension ApiHandler {
      - Returns: List of unassigned notes
      */
     func getUnassignedNotes(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Note> {
-        return try await self.get(from: .unassignedNotes, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        let data = try await self.sendRequest(to: .unassignedNotes, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        
+        return try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data)
     }
     
     /**
@@ -575,8 +564,7 @@ public extension ApiHandler {
     func createUnassignedNote(_ note: Note) async throws -> Note {
         let data = try await self.sendRequest(to: .unassignedNotes, method: .POST, body: self.jsonEncoder.encode(note))
         
-        let response = try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data)
-        return response.result
+        return try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data).result
     }
     
     
@@ -585,7 +573,9 @@ public extension ApiHandler {
      - Returns: Note with the given id
      */
     func getNote(_ id: Int) async throws -> Note {
-        return try await self.get(from: .note(id: id))
+        let data = try await self.sendRequest(to: .note(id: id))
+        
+        return try self.jsonDecoder.decode(Note.self, from: data)
     }
     
     /**
@@ -608,12 +598,9 @@ public extension ApiHandler {
     func deleteNote(_ note: Note) async throws {
         _ = try await self.sendRequest(to: .note(id: note.id), method: .DELETE)
     }
-}
-
-
-// MARK: Activity Endpoints
-public extension ApiHandler {
     
+    
+    // MARK: Activity Endpoints
     /**
      Get all activities
      - Parameter limit: Maximum number of contacts per page
@@ -622,7 +609,9 @@ public extension ApiHandler {
      - Returns: List of activities
      */
     func getActivities(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Activity> {
-        return try await self.get(from: .activities, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        let data = try await self.sendRequest(to: .activities, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        
+        return try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data)
     }
     
     /**
@@ -643,7 +632,9 @@ public extension ApiHandler {
      - Returns: Activity with the given id
      */
     func getActivity(_ id: Int) async throws -> Activity {
-        return try await self.get(from: .activity(id: id))
+        let data = try await self.sendRequest(to: .activity(id: id))
+        
+        return try self.jsonDecoder.decode(Activity.self, from: data)
     }
     
     /**
@@ -674,16 +665,13 @@ public extension ApiHandler {
      - Returns: All activities for that contact
      */
     func getContactActivities(_ contact: Contact) async throws -> [Activity] {
-        let response: PaginatedResponse<Activity> = try await self.get(from: .contactActivities(contactId: contact.id))
+        let data = try await self.sendRequest(to: .contactActivities(contactId: contact.id))
         
-        return response.results
+        return try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data).results
     }
-}
-
-
-// MARK: Reminder Endpoints
-public extension ApiHandler {
     
+    
+    // MARK: Reminder Endpoints
     /**
      Get all reminders
      - Returns: List of reminders
@@ -700,9 +688,9 @@ public extension ApiHandler {
      - Returns: List of reminders
      */
     func getUpcomingReminders() async throws -> [Reminder] {
-        let response: PaginatedResponse<Reminder> = try await self.get(from: .upcomingReminders)
+        let data = try await self.sendRequest(to: .upcomingReminders)
         
-        return response.results
+        return try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data).results
     }
     
     /**
@@ -710,7 +698,9 @@ public extension ApiHandler {
      - Returns: Reminder with the given id
      */
     func getReminder(_ id: Int) async throws -> Reminder {
-        return try await self.get(from: .reminder(id: id))
+        let data = try await self.sendRequest(to: .reminder(id: id))
+        
+        return try self.jsonDecoder.decode(Reminder.self, from: data)
     }
     
     /**
@@ -749,9 +739,9 @@ public extension ApiHandler {
      - Returns: Reminders for that contact
      */
     func getContactReminders(_ contact: Contact) async throws -> [Reminder] {
-        let response: PaginatedResponse<Reminder> = try await self.get(from: .contactReminders(contactId: contact.id))
+        let data = try await self.sendRequest(to: .contactReminders(contactId: contact.id))
         
-        return response.results
+        return try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data).results
     }
     
     /**
@@ -774,9 +764,9 @@ public extension ApiHandler {
      - Returns: List of completed reminders for that contact
      */
     func getCompletedReminders(for contact: Contact) async throws -> [ReminderCompletion] {
-        let response: PaginatedResponse<ReminderCompletion> = try await self.get(from: .completedReminders(contactId: contact.id))
+        let data = try await self.sendRequest(to: .unassignedNotes)
         
-        return response.results
+        return try self.jsonDecoder.decode(PaginatedResponse<ReminderCompletion>.self, from: data).results
     }
     
     /** Delete a completion entry
@@ -785,13 +775,11 @@ public extension ApiHandler {
     func deleteCompletedReminder(_ reminder: Reminder) async throws {
         _ = try await self.sendRequest(to: .reminderCompletions(id: reminder.id))
     }
-}
-
-// MARK: Import
-public extension ApiHandler {
     
+    
+    // MARK: Import
     /**
-    Upload a CSV file, returns parsed preview data
+     Upload a CSV file, returns parsed preview data
      - Parameter csvData: Data representation of the CSV file to upload
      
      - Returns: UploadPreviewResponse
@@ -885,11 +873,9 @@ public extension ApiHandler {
         
         return try self.jsonDecoder.decode(ImportResult.self, from: data)
     }
-}
-
-// MARK: Export
-public extension ApiHandler {
     
+    
+    // MARK: Export
     /**
      Download all data as CSV
      - Returns: Data of the CSV file
@@ -907,22 +893,21 @@ public extension ApiHandler {
         let data = try await self.sendRequest(to: .exportVCF)
         return data
     }
-}
-
-
-// MARK: Graph
-public extension ApiHandler {
+    
+    
+    // MARK: Graph
     
     /** Get contact network graph data
      - Returns: Graph object containing all nodes and edges of the graph
      */
     func getNetworkGraph() async throws -> Graph {
-        return try await self.get(from: .graph)
+        let data = try await self.sendRequest(to: .graph)
+        
+        return try self.jsonDecoder.decode(Graph.self, from: data)
     }
-}
-
-// MARK: Tokens (Static)
-public extension ApiHandler {
+    
+    
+    // MARK: Tokens (Static)
     private static func sendRequest(serverURL: URL, endpoint: ApiEndpoint, method: HTTPMethod = .GET, body: Data? = nil) async throws -> Data {
         
         var request = URLRequest(url: serverURL.appendingApiPath(endpoint))
@@ -1023,11 +1008,9 @@ public extension ApiHandler {
     static func revokeApiToken(serverURL: URL, id: Int) async throws {
         _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .apiToken(id: id), method: .DELETE)
     }
-}
-
-// MARK: Admin
-public extension ApiHandler {
     
+    
+    // MARK: Admin
     /**
      Get all users
      - Parameter limit: Maximum number of users per page
@@ -1047,7 +1030,9 @@ public extension ApiHandler {
      - Returns: User with the given id
      */
     func getUser(_ id: Int) async throws -> User {
-        return try await self.get(from: .user(id: id))
+        let data = try await self.sendRequest(to: .user(id: id))
+        
+        return try self.jsonDecoder.decode(User.self, from: data)
     }
     
     /**
@@ -1069,11 +1054,9 @@ public extension ApiHandler {
     func deleteUser(_ user: User) async throws {
         _ = try await self.sendRequest(to: .user(id: user.id), method: .DELETE)
     }
-}
-
-
-// MARK: Health
-public extension ApiHandler {
+    
+    
+    // MARK: Health
     /**
      Health check
      - Returns: Health status for the server
