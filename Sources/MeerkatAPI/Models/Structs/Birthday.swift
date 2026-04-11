@@ -14,10 +14,10 @@ public enum BirthdayType: String, Codable {
 }
 
 public struct Birthday: Codable, Hashable {
-    public let type: BirthdayType
-    public let name: String
-    public let birthday: DateComponents
-    public let contactId: Int?
+    public var type: BirthdayType
+    public var name: String
+    public var birthday: DateComponents
+    public var contactId: Int?
     
     enum CodingKeys: String, CodingKey {
         case type

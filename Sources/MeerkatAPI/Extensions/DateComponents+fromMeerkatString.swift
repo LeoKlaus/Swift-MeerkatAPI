@@ -33,4 +33,15 @@ extension DateComponents {
             }
         }
     }
+    
+    var meerkatString: String? {
+        guard let day, let month else {
+            return nil
+        }
+        if let year {
+            return "\(String(format: "%04d", year))-\(String(format: "%02d", month))-\(String(format: "%02d", day))"
+        } else {
+            return "--\(String(format: "%02d", month))-\(String(format: "%02d", day))"
+        }
+    }
 }

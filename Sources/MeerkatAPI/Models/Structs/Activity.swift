@@ -12,11 +12,11 @@ public struct Activity: Codable, Hashable, Identifiable, TimelineEntry {
     public let createdAt: Date
     public let updatedAt: Date?
     public let deletedAt: Date?
-    public let title: String
-    public let description: String?
-    public let location: String?
-    public let date: Date
-    public let contacts: [Contact]?
+    public var title: String
+    public var description: String?
+    public var location: String?
+    public var date: Date
+    public var contacts: [Contact]?
     
     public let uuid = UUID()
     public var time: Date? {

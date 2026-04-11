@@ -12,10 +12,10 @@ public struct Note: Codable, Identifiable, Hashable, TimelineEntry {
     public let createdAt: Date
     public let updatedAt: Date?
     public let deletedAt: Date?
-    public let content: String
-    public let date: Date?
-    public let contactId: Int?
-    public let contact: Contact?
+    public var content: String
+    public var date: Date?
+    public var contactId: Int?
+    public var contact: Contact?
     
     public let uuid = UUID()
     public var time: Date? {

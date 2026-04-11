@@ -105,4 +105,38 @@ import Foundation
         #expect(contact?.archived == false)
         #expect(contact?.photoThumbnail == "")
     }
+    
+    @Test func testEncodeReminder() async throws {
+        
+        let reminder = Reminder(
+            id: 1,
+            createdAt: .now,
+            updatedAt: .now,
+            deletedAt: nil,
+            message: "Some Reminder",
+            byMail: true,
+            remindAt: Date(timeIntervalSince1970: 1774739593),
+            recurrence: .weekly,
+            reoccurFromCompletion: true,
+            completed: false,
+            emailSent: false,
+            lastSent: nil,
+            contactId: 1,
+            contact: nil
+        )
+        
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = .sortedKeys
+        
+        let encodedData = try encoder.encode(reminder)
+        
+        let encodedStr = String(data: encodedData, encoding: .utf8)
+        
+        let expectedStr = """
+        {"by_mail":true,"contact_id":1,"message":"Some Reminder","recurrence":"weekly","remind_at":"2026-03-28T23:13:13Z","reoccur_from_completion":true}
+        """
+        
+        #expect(encodedStr == expectedStr)
+    }
 }

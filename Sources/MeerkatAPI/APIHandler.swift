@@ -8,7 +8,7 @@
 import Foundation
 import OSLog
 
-final class ApiHandler: Sendable {
+public final class ApiHandler: Sendable {
     
     private static let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier!,
@@ -55,7 +55,11 @@ final class ApiHandler: Sendable {
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         
-        Self.logger.debug("Sending \(method.rawValue, privacy: .public) request to \(endpoint.toPath(), privacy: .public)")
+        if parameters.isEmpty {
+            Self.logger.debug("Sending \(method.rawValue, privacy: .public) request to \(endpoint.toPath(), privacy: .public)")
+        } else {
+            Self.logger.debug("Sending \(method.rawValue, privacy: .public) request to \(endpoint.toPath(), privacy: .public) with parameters:\n \(parameters.map{"\($0.name)=\($0.value ?? "")"}.joined(separator: ",\n"), privacy: .public)")
+        }
         
         let (data, response) = try await self.session.data(for: request)
         
@@ -95,7 +99,7 @@ final class ApiHandler: Sendable {
      - Parameter password:      minimum 8 characters, can be tested beforehand using `checkPasswordStrength(String)`
      - Parameter language:      InterfaceLanguage (currently either `en` or `de`)
      */
-    func register(username: String, password: String, mailAddress: String, language: InterfaceLanguage) async throws {
+    public func register(username: String, password: String, mailAddress: String, language: InterfaceLanguage) async throws {
         let credentials = [
             "Username": username,
             "Email": mailAddress,
@@ -115,7 +119,7 @@ final class ApiHandler: Sendable {
      - Parameter password:      minimum 8 characters, can be tested beforehand using `checkPasswordStrength(String)`
      - Parameter language:      InterfaceLanguage (currently either `en` or `de`)
      */
-    static func register(serverURL: URL, username: String, password: String, mailAddress: String, language: InterfaceLanguage) async throws {
+    public static func register(serverURL: URL, username: String, password: String, mailAddress: String, language: InterfaceLanguage) async throws {
         let credentials = [
             "Username": username,
             "Email": mailAddress,
@@ -134,7 +138,7 @@ final class ApiHandler: Sendable {
      
      - Returns: LoginResponse, if authentication was successful
      */
-    func login(username: String, password: String) async throws -> LoginResponse {
+    public func login(username: String, password: String) async throws -> LoginResponse {
         let credentials = [
             "identifier": username,
             "password": password
@@ -149,14 +153,14 @@ final class ApiHandler: Sendable {
      Clear current session cookie
      - Parameter serverURL: URL of the server
      */
-    static func logout(_ serverURL: URL) async throws {
+    public static func logout(_ serverURL: URL) async throws {
         _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .logout, method: .POST)
     }
     
     /**
      Clear current session cookie
      */
-    func logout() async throws {
+    public func logout() async throws {
         _ = try await self.sendRequest(to: .logout, method: .POST)
     }
     
@@ -166,7 +170,7 @@ final class ApiHandler: Sendable {
      
      - Returns: PasswordStrengthResponse for the given password
      */
-    func checkPasswordStrength(_ password: String) async throws -> PasswordStrengthResponse {
+    public func checkPasswordStrength(_ password: String) async throws -> PasswordStrengthResponse {
         let passwordDict = [
             "Password": password
         ]
@@ -183,7 +187,7 @@ final class ApiHandler: Sendable {
      
      - Returns: PasswordStrengthResponse for the given password
      */
-    static func checkPasswordStrength(serverURL: URL, password: String) async throws -> PasswordStrengthResponse {
+    public static func checkPasswordStrength(serverURL: URL, password: String) async throws -> PasswordStrengthResponse {
         let passwordDict = [
             "Password": password
         ]
@@ -197,7 +201,7 @@ final class ApiHandler: Sendable {
      Send a password reset email
      - Parameter mailAddress: Mail address of the user whos password should be reset
      */
-    func requestPasswordReset(mailAddress: String) async throws {
+    public func requestPasswordReset(mailAddress: String) async throws {
         let mailDict = [
             "Email": mailAddress
         ]
@@ -210,7 +214,7 @@ final class ApiHandler: Sendable {
      - Parameter serverURL:     URL of the server
      - Parameter mailAddress: Mail address of the user whos password should be reset
      */
-    static func requestPasswordReset(serverURL: URL, mailAddress: String) async throws {
+    public static func requestPasswordReset(serverURL: URL, mailAddress: String) async throws {
         let mailDict = [
             "Email": mailAddress
         ]
@@ -224,7 +228,7 @@ final class ApiHandler: Sendable {
      - Parameter token: Token from the password reset mail
      - Parameter newPassword: New password for the user
      */
-    static func confirmPasswordReset(serverURL: URL, token: String, newPassword: String) async throws {
+    public static func confirmPasswordReset(serverURL: URL, token: String, newPassword: String) async throws {
         let tokenPassDict = [
             "Token": token,
             "Password": newPassword
@@ -238,7 +242,7 @@ final class ApiHandler: Sendable {
      - Parameter token: Token from the password reset mail
      - Parameter newPassword: New password for the user
      */
-    func confirmPasswordReset(token: String, newPassword: String) async throws {
+    public func confirmPasswordReset(token: String, newPassword: String) async throws {
         let tokenPassDict = [
             "Token": token,
             "Password": newPassword
@@ -252,7 +256,7 @@ final class ApiHandler: Sendable {
     /** Get the current user
      - Returns: The current user
      */
-    func getMe() async throws -> User {
+    public func getMe() async throws -> User {
         let data = try await self.sendRequest(to: .me)
         return try self.jsonDecoder.decode(User.self, from: data)
     }
@@ -261,7 +265,7 @@ final class ApiHandler: Sendable {
      - Parameter currentPassword: Current password of the user
      - Parameter newPassword: New password for the user
      */
-    func changePassword(currentPassword: String, newPassword: String) async throws {
+    public func changePassword(currentPassword: String, newPassword: String) async throws {
         let passDict = [
             "current_password": currentPassword,
             "new_password": newPassword
@@ -274,7 +278,7 @@ final class ApiHandler: Sendable {
      Update UI language preference (WebUI only!)
      - Parameter newLanguage: New language to use
      */
-    func changeLanguage(_ newLanguage: InterfaceLanguage) async throws {
+    public func changeLanguage(_ newLanguage: InterfaceLanguage) async throws {
         let bodyDict = [
             "language": newLanguage.rawValue
         ]
@@ -286,7 +290,7 @@ final class ApiHandler: Sendable {
      Update date format preference (WebUI only!)
      - Parameter newFormat: New date format to use
      */
-    func changeDateFormat(_ newFormat: DateFormat) async throws {
+    public func changeDateFormat(_ newFormat: DateFormat) async throws {
         let bodyDict = [
             "date_format": newFormat.rawValue
         ]
@@ -298,7 +302,7 @@ final class ApiHandler: Sendable {
      Get custom field names
      - Returns: CustomFields object containing all custom field names
      */
-    func getCustomFields() async throws -> CustomFields {
+    public func getCustomFields() async throws -> CustomFields {
         let data = try await self.sendRequest(to: .customFields)
         return try self.jsonDecoder.decode(CustomFields.self, from: data)
     }
@@ -309,7 +313,7 @@ final class ApiHandler: Sendable {
      
      - Returns: CustomFields object containing all custom field names
      */
-    func updateCustomFields(_ newFields: CustomFields) async throws -> CustomFields {
+    public func updateCustomFields(_ newFields: CustomFields) async throws -> CustomFields {
         let data = try await self.sendRequest(to: .customFields, method: .PATCH, body: self.jsonEncoder.encode(newFields))
         
         return try self.jsonDecoder.decode(CustomFields.self, from: data)
@@ -327,10 +331,65 @@ final class ApiHandler: Sendable {
      
      - Returns: List of contacts
      */
-    func getContacts(fields: Set<Contact.CodingKeys> = Contact.defaultFields, limit: Int = 50, page: Int = 1, sort: Contact.CodingKeys = .id, order: String = "desc") async throws -> PaginatedResponse<Contact> {
-        let fieldsQueryItem = URLQueryItem(name: "fields", value: fields.map{ $0.rawValue }.joined(separator: ","))
+    public func getContacts(fields: Set<Contact.CodingKeys> = Contact.defaultFields, limit: Int = 50, page: Int = 1, search: String? = nil, sort: Contact.CodingKeys = .id, order: SortOrder = .reverse, includeArchived: Bool = false, circleFilter: String? = nil) async throws -> PaginatedResponse<Contact> {
+        var parameters: [URLQueryItem] = [
+            URLQueryItem(limit: limit),
+            URLQueryItem(page: page)
+        ]
         
-        let data = try await self.sendRequest(to: .contacts, parameters: [fieldsQueryItem, URLQueryItem(limit: limit), URLQueryItem(page: page)])
+        parameters.append(
+            URLQueryItem(
+                name: "fields",
+                value: fields.map{ $0.rawValue
+                }.joined(separator: ","))
+        )
+        
+        if includeArchived {
+            parameters.append(
+                URLQueryItem(
+                    name: "include_archived",
+                    value: "true"
+                )
+            )
+        }
+        parameters.append(
+            URLQueryItem(
+                name: "sort",
+                value: sort.rawValue
+            )
+        )
+        
+        parameters.append(
+            URLQueryItem(
+                name: "order",
+                value: order == .forward ? "asc" : "desc"
+            )
+        )
+        
+        
+        
+        if let search {
+            parameters.append(
+                URLQueryItem(
+                    name: "search",
+                    value: search
+                )
+            )
+        }
+        
+        if let circleFilter {
+            parameters.append(
+                URLQueryItem(
+                    name: "circle",
+                    value: circleFilter
+                )
+            )
+        }
+        
+        let data = try await self.sendRequest(
+            to: .contacts,
+            parameters: parameters
+        )
         return try self.jsonDecoder.decode(PaginatedResponse<Contact>.self, from: data)
     }
     
@@ -340,7 +399,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The newly created contact
      */
-    func createContact(_ newContact: Contact) async throws -> Contact {
+    public func createContact(_ newContact: Contact) async throws -> Contact {
         let data = try await self.sendRequest(to: .contacts, method: .POST, body: self.jsonEncoder.encode(newContact))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Contact>.self, from: data)
@@ -351,7 +410,7 @@ final class ApiHandler: Sendable {
      Get a contact
      - Returns: The contact with the given id
      */
-    func getContact(id: Int) async throws -> Contact {
+    public func getContact(id: Int) async throws -> Contact {
         let data = try await self.sendRequest(to: .contact(id: id))
         return try self.jsonDecoder.decode(Contact.self, from: data)
     }
@@ -362,7 +421,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The updated contact
      */
-    func updateContact(_ contact: Contact) async throws -> Contact {
+    public func updateContact(_ contact: Contact) async throws -> Contact {
         let data = try await self.sendRequest(to: .contact(id: contact.id), method: .PUT, body: self.jsonEncoder.encode(contact))
         
         return try self.jsonDecoder.decode(Contact.self, from: data)
@@ -372,7 +431,7 @@ final class ApiHandler: Sendable {
      Delete an existing contact
      - Parameter contact: Contact to delete
      */
-    func deleteContact(_ contact: Contact) async throws {
+    public func deleteContact(_ contact: Contact) async throws {
         _ = try await self.sendRequest(to: .contact(id: contact.id), method: .DELETE)
     }
     
@@ -382,7 +441,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The archived contact
      */
-    func archiveContact(_ contact: Contact) async throws -> Contact {
+    public func archiveContact(_ contact: Contact) async throws -> Contact {
         let data = try await self.sendRequest(to: .archiveContact(id: contact.id), method: .POST)
         
         return try self.jsonDecoder.decode(Contact.self, from: data)
@@ -393,7 +452,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The unarchived contact
      */
-    func unarchiveContact(_ contact: Contact) async throws -> Contact {
+    public func unarchiveContact(_ contact: Contact) async throws -> Contact {
         let data = try await self.sendRequest(to: .unarchiveContact(id: contact.id), method: .POST)
         
         return try self.jsonDecoder.decode(Contact.self, from: data)
@@ -403,7 +462,7 @@ final class ApiHandler: Sendable {
      List all circles in use
      - Returns: A list of all currently used circles
      */
-    func getCircles() async throws -> [String] {
+    public func getCircles() async throws -> [String] {
         let data = try await self.sendRequest(to: .circles)
         
         return try self.jsonDecoder.decode([String].self, from: data)
@@ -413,7 +472,7 @@ final class ApiHandler: Sendable {
      Get five random contacts
      - Returns: Up to five random contacts
      */
-    func getRandomContacts() async throws -> [Contact] {
+    public func getRandomContacts() async throws -> [Contact] {
         // TODO: Check if this gets support for fields in the future
         let data = try await self.sendRequest(to: .randomContacts)
         
@@ -424,7 +483,7 @@ final class ApiHandler: Sendable {
      Get upcoming birthdays
      - Returns: List of upcoming birthdays
      */
-    func getUpcomingBirthdays() async throws -> [Birthday] {
+    public func getUpcomingBirthdays() async throws -> [Birthday] {
         let data = try await self.sendRequest(to: .birthdays)
         
         return try self.jsonDecoder.decode(PaginatedResponse<Birthday>.self, from: data).results
@@ -433,7 +492,7 @@ final class ApiHandler: Sendable {
     /** Get a contact’s profile picture
      - Parameter contact: The contact whose profile should be loaded
      */
-    func getContactImage(_ contact: Contact) async throws -> Data {
+    public func getContactImage(_ contact: Contact) async throws -> Data {
         return try await self.sendRequest(to: .contactImage(id: contact.id))
     }
     
@@ -444,7 +503,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The updated contact
      */
-    func uploadContactImage(contact: Contact, imageURL: URL) async throws -> Contact {
+    public func uploadContactImage(contact: Contact, imageURL: URL) async throws -> Contact {
         let boundary = UUID().uuidString
         
         let body = try imageURL.toMultipartData(with: boundary)
@@ -461,7 +520,7 @@ final class ApiHandler: Sendable {
      
      - Returns: List of outgoing relationships for that contact
      */
-    func getOutgoingRelationships(_ contact: Contact) async throws -> [Relationship] {
+    public func getOutgoingRelationships(_ contact: Contact) async throws -> [Relationship] {
         let data = try await self.sendRequest(to: .relationships(contactId: contact.id))
         
         return try self.jsonDecoder.decode(PaginatedResponse<Relationship>.self, from: data).results
@@ -474,7 +533,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The newly created relationship
      */
-    func createRelationship(contact: Contact, relationShip: Relationship) async throws -> Relationship {
+    public func createRelationship(contact: Contact, relationShip: Relationship) async throws -> Relationship {
         let data = try await self.sendRequest(to: .relationships(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(relationShip))
         
         return try self.jsonDecoder.decode(WrappedObject<Relationship>.self, from: data).result
@@ -486,7 +545,7 @@ final class ApiHandler: Sendable {
      
      - Returns: List of incoming relationships for that contact
      */
-    func getIncomingRelationships(_ contact: Contact) async throws -> [Relationship] {
+    public func getIncomingRelationships(_ contact: Contact) async throws -> [Relationship] {
         let data = try await self.sendRequest(to: .incomingRelationships(contactId: contact.id))
         
         return try self.jsonDecoder.decode(PaginatedResponse<Relationship>.self, from: data).results
@@ -499,7 +558,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The updated relationship
      */
-    func updateRelationship(contact: Contact, relationship: Relationship) async throws -> Relationship {
+    public func updateRelationship(contact: Contact, relationship: Relationship) async throws -> Relationship {
         let data = try await self.sendRequest(to: .updateRelationship(contactId: contact.id, relationshipId: relationship.id), method: .PUT, body: self.jsonEncoder.encode(relationship))
         
         return try self.jsonDecoder.decode(Relationship.self, from: data)
@@ -510,7 +569,7 @@ final class ApiHandler: Sendable {
      - Parameter contact: Contact whose relationship should be deleted
      - Parameter relationship: The relationship to be deleted
      */
-    func deleteRelationship(contact: Contact, relationship: Relationship) async throws {
+    public func deleteRelationship(contact: Contact, relationship: Relationship) async throws {
         _ = try await self.sendRequest(to: .updateRelationship(contactId: contact.id, relationshipId: relationship.id), method: .DELETE)
     }
     
@@ -522,7 +581,7 @@ final class ApiHandler: Sendable {
      
      - Returns: List of notes for the given contact
      */
-    func getContactNotes(_ contact: Contact) async throws -> [Note] {
+    public func getContactNotes(_ contact: Contact) async throws -> [Note] {
         let data = try await self.sendRequest(to: .contactNotes(contactId: contact.id))
         
         return try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data).results
@@ -535,7 +594,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The newly created note
      */
-    func createContactNote(contact: Contact, note: Note) async throws -> Note {
+    public func createContactNote(contact: Contact, note: Note) async throws -> Note {
         let data = try await self.sendRequest(to: .contactNotes(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(note))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data)
@@ -549,7 +608,7 @@ final class ApiHandler: Sendable {
      
      - Returns: List of unassigned notes
      */
-    func getUnassignedNotes(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Note> {
+    public func getUnassignedNotes(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Note> {
         let data = try await self.sendRequest(to: .unassignedNotes, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
         
         return try self.jsonDecoder.decode(PaginatedResponse<Note>.self, from: data)
@@ -561,7 +620,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The newly created note
      */
-    func createUnassignedNote(_ note: Note) async throws -> Note {
+    public func createUnassignedNote(_ note: Note) async throws -> Note {
         let data = try await self.sendRequest(to: .unassignedNotes, method: .POST, body: self.jsonEncoder.encode(note))
         
         return try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data).result
@@ -572,7 +631,7 @@ final class ApiHandler: Sendable {
      Get a note
      - Returns: Note with the given id
      */
-    func getNote(_ id: Int) async throws -> Note {
+    public func getNote(_ id: Int) async throws -> Note {
         let data = try await self.sendRequest(to: .note(id: id))
         
         return try self.jsonDecoder.decode(Note.self, from: data)
@@ -584,7 +643,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The updated note
      */
-    func updateNote(_ note: Note) async throws -> Note {
+    public func updateNote(_ note: Note) async throws -> Note {
         let data = try await self.sendRequest(to: .note(id: note.id), method: .PUT, body: self.jsonEncoder.encode(note))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data)
@@ -595,7 +654,7 @@ final class ApiHandler: Sendable {
      Delete a note
      - Parameter note: Note to delete
      */
-    func deleteNote(_ note: Note) async throws {
+    public func deleteNote(_ note: Note) async throws {
         _ = try await self.sendRequest(to: .note(id: note.id), method: .DELETE)
     }
     
@@ -608,7 +667,7 @@ final class ApiHandler: Sendable {
      
      - Returns: List of activities
      */
-    func getActivities(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Activity> {
+    public func getActivities(limit: Int = 50, page: Int = 1) async throws -> PaginatedResponse<Activity> {
         let data = try await self.sendRequest(to: .activities, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
         
         return try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data)
@@ -620,8 +679,8 @@ final class ApiHandler: Sendable {
      
      - Returns: The newly created note
      */
-    func createActivity(_ note: Activity) async throws -> Activity {
-        let data = try await self.sendRequest(to: .activities, method: .POST, body: self.jsonEncoder.encode(note))
+    public func createActivity(_ activity: Activity) async throws -> Activity {
+        let data = try await self.sendRequest(to: .activities, method: .POST, body: self.jsonEncoder.encode(activity))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Activity>.self, from: data)
         return response.result
@@ -631,7 +690,7 @@ final class ApiHandler: Sendable {
      Get an activity
      - Returns: Activity with the given id
      */
-    func getActivity(_ id: Int) async throws -> Activity {
+    public func getActivity(_ id: Int) async throws -> Activity {
         let data = try await self.sendRequest(to: .activity(id: id))
         
         return try self.jsonDecoder.decode(Activity.self, from: data)
@@ -643,7 +702,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The updated activity
      */
-    func updateActivity(_ activity: Activity) async throws -> Activity {
+    public func updateActivity(_ activity: Activity) async throws -> Activity {
         let data = try await self.sendRequest(to: .activity(id: activity.id), method: .PUT, body: self.jsonEncoder.encode(activity))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Activity>.self, from: data)
@@ -654,7 +713,7 @@ final class ApiHandler: Sendable {
      Delete an activity
      - Parameter activity: Activity to delete
      */
-    func deleteActivity(_ activity: Activity) async throws {
+    public func deleteActivity(_ activity: Activity) async throws {
         _ = try await self.sendRequest(to: .activity(id: activity.id), method: .DELETE)
     }
     
@@ -664,7 +723,7 @@ final class ApiHandler: Sendable {
      
      - Returns: All activities for that contact
      */
-    func getContactActivities(_ contact: Contact) async throws -> [Activity] {
+    public func getContactActivities(_ contact: Contact) async throws -> [Activity] {
         let data = try await self.sendRequest(to: .contactActivities(contactId: contact.id))
         
         return try self.jsonDecoder.decode(PaginatedResponse<Activity>.self, from: data).results
@@ -676,7 +735,7 @@ final class ApiHandler: Sendable {
      Get all reminders
      - Returns: List of reminders
      */
-    func getReminders() async throws -> [Reminder] {
+    public func getReminders() async throws -> [Reminder] {
         let data = try await self.sendRequest(to: .reminders)
         
         let response = try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data)
@@ -687,7 +746,7 @@ final class ApiHandler: Sendable {
      Get all upcoming reminders
      - Returns: List of reminders
      */
-    func getUpcomingReminders() async throws -> [Reminder] {
+    public func getUpcomingReminders() async throws -> [Reminder] {
         let data = try await self.sendRequest(to: .upcomingReminders)
         
         return try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data).results
@@ -697,7 +756,7 @@ final class ApiHandler: Sendable {
      Get a reminder
      - Returns: Reminder with the given id
      */
-    func getReminder(_ id: Int) async throws -> Reminder {
+    public func getReminder(_ id: Int) async throws -> Reminder {
         let data = try await self.sendRequest(to: .reminder(id: id))
         
         return try self.jsonDecoder.decode(Reminder.self, from: data)
@@ -709,7 +768,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The updated reminder
      */
-    func updateReminder(_ reminder: Reminder) async throws -> Reminder {
+    public func updateReminder(_ reminder: Reminder) async throws -> Reminder {
         let data = try await self.sendRequest(to: .reminder(id: reminder.id), method: .PUT, body: self.jsonEncoder.encode(reminder))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Reminder>.self, from: data)
@@ -720,7 +779,7 @@ final class ApiHandler: Sendable {
      Delete a reminder
      - Parameter reminder: Reminder to delete
      */
-    func deleteReminder(_ reminder: Reminder) async throws {
+    public func deleteReminder(_ reminder: Reminder) async throws {
         _ = try await self.sendRequest(to: .reminder(id: reminder.id), method: .DELETE)
     }
     
@@ -728,7 +787,7 @@ final class ApiHandler: Sendable {
      Mark a reminder complete (creates timeline entry)
      - Parameter reminder: Reminder to mark completed
      */
-    func completeReminder(_ reminder: Reminder) async throws {
+    public func completeReminder(_ reminder: Reminder) async throws {
         _ = try await self.sendRequest(to: .completeReminder(id: reminder.id), method: .POST)
     }
     
@@ -738,7 +797,7 @@ final class ApiHandler: Sendable {
      
      - Returns: Reminders for that contact
      */
-    func getContactReminders(_ contact: Contact) async throws -> [Reminder] {
+    public func getContactReminders(_ contact: Contact) async throws -> [Reminder] {
         let data = try await self.sendRequest(to: .contactReminders(contactId: contact.id))
         
         return try self.jsonDecoder.decode(PaginatedResponse<Reminder>.self, from: data).results
@@ -746,15 +805,15 @@ final class ApiHandler: Sendable {
     
     /**
      Create a reminder for a contact
-     - Parameter contact: Contact to get create a reminder for
+     - Parameter contactId: ID of the contact to get create a reminder for
      - Parameter reminder: Reminder to create
      
      - Returns: Newly created reminder
      */
-    func createContactReminder(contact: Contact, reminder: Reminder) async throws -> Reminder {
-        let data = try await self.sendRequest(to: .contactReminders(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(reminder))
+    public func createContactReminder(contactId: Int, reminder: Reminder) async throws -> Reminder {
+        let data = try await self.sendRequest(to: .contactReminders(contactId: contactId), method: .POST, body: self.jsonEncoder.encode(reminder))
         
-        return try self.jsonDecoder.decode(Reminder.self, from: data)
+        return try self.jsonDecoder.decode(WrappedObject<Reminder>.self, from: data).result
     }
     
     /**
@@ -763,8 +822,8 @@ final class ApiHandler: Sendable {
      
      - Returns: List of completed reminders for that contact
      */
-    func getCompletedReminders(for contact: Contact) async throws -> [ReminderCompletion] {
-        let data = try await self.sendRequest(to: .unassignedNotes)
+    public func getCompletedReminders(for contact: Contact) async throws -> [ReminderCompletion] {
+        let data = try await self.sendRequest(to: .completedReminders(contactId: contact.id))
         
         return try self.jsonDecoder.decode(PaginatedResponse<ReminderCompletion>.self, from: data).results
     }
@@ -772,7 +831,7 @@ final class ApiHandler: Sendable {
     /** Delete a completion entry
      - Parameter reminder: Reminder to delete
      */
-    func deleteCompletedReminder(_ reminder: Reminder) async throws {
+    public func deleteCompletedReminder(_ reminder: Reminder) async throws {
         _ = try await self.sendRequest(to: .reminderCompletions(id: reminder.id))
     }
     
@@ -784,7 +843,7 @@ final class ApiHandler: Sendable {
      
      - Returns: UploadPreviewResponse
      */
-    func uploadCsvImport(_ csvData: Data) async throws -> ImportUploadResponse {
+    public func uploadCsvImport(_ csvData: Data) async throws -> ImportUploadResponse {
         let boundary = UUID().uuidString
         let body = try csvData.toMultipartData(boundary: boundary, fileName: "import.csv", mimeType: .delimitedText)
         
@@ -799,7 +858,7 @@ final class ApiHandler: Sendable {
      
      - Returns: UploadPreviewResponse
      */
-    func uploadCsvImport(_ csvURL: URL) async throws -> ImportUploadResponse {
+    public func uploadCsvImport(_ csvURL: URL) async throws -> ImportUploadResponse {
         let boundary = UUID().uuidString
         let body = try csvURL.toMultipartData(with: boundary)
         
@@ -814,7 +873,7 @@ final class ApiHandler: Sendable {
      
      - Returns: ImportPreviewResponse
      */
-    func previewCsvUpload(_ request: ImportPreviewRequest) async throws -> ImportPreviewResponse {
+    public func previewCsvUpload(_ request: ImportPreviewRequest) async throws -> ImportPreviewResponse {
         let data = try await self.sendRequest(to: .importPreviewCSV, method: .POST, body: self.jsonEncoder.encode(request))
         
         return try self.jsonDecoder.decode(ImportPreviewResponse.self, from: data)
@@ -826,7 +885,7 @@ final class ApiHandler: Sendable {
      
      - Returns: ImportResult
      */
-    func confirmCsvUpload(_ request: ImportConfirmRequest) async throws -> ImportResult {
+    public func confirmCsvUpload(_ request: ImportConfirmRequest) async throws -> ImportResult {
         let data = try await self.sendRequest(to: .importConfirmCSV, method: .POST, body: self.jsonEncoder.encode(request))
         
         return try self.jsonDecoder.decode(ImportResult.self, from: data)
@@ -838,7 +897,7 @@ final class ApiHandler: Sendable {
      
      - Returns: UploadPreviewResponse
      */
-    func uploadVcfImport(_ vcfData: Data) async throws -> ImportUploadResponse {
+    public func uploadVcfImport(_ vcfData: Data) async throws -> ImportUploadResponse {
         let boundary = UUID().uuidString
         let body = try vcfData.toMultipartData(boundary: boundary, fileName: "import.vcf", mimeType: .delimitedText)
         
@@ -853,7 +912,7 @@ final class ApiHandler: Sendable {
      
      - Returns: UploadPreviewResponse
      */
-    func uploadVcfImport(_ vcfURL: URL) async throws -> ImportUploadResponse {
+    public func uploadVcfImport(_ vcfURL: URL) async throws -> ImportUploadResponse {
         let boundary = UUID().uuidString
         let body = try vcfURL.toMultipartData(with: boundary)
         
@@ -868,7 +927,7 @@ final class ApiHandler: Sendable {
      
      - Returns: ImportResult
      */
-    func confirmVcfUpload(_ request: ImportConfirmRequest) async throws -> ImportResult {
+    public func confirmVcfUpload(_ request: ImportConfirmRequest) async throws -> ImportResult {
         let data = try await self.sendRequest(to: .importConfirmVCF, method: .POST, body: self.jsonEncoder.encode(request))
         
         return try self.jsonDecoder.decode(ImportResult.self, from: data)
@@ -880,7 +939,7 @@ final class ApiHandler: Sendable {
      Download all data as CSV
      - Returns: Data of the CSV file
      */
-    func exportCSV() async throws -> Data {
+    public func exportCSV() async throws -> Data {
         let data = try await self.sendRequest(to: .exportCSV)
         return data
     }
@@ -889,7 +948,7 @@ final class ApiHandler: Sendable {
      Download all contacts as VCF (includes photos)
      - Returns: Data of the VCF file
      */
-    func exportVCF() async throws -> Data {
+    public func exportVCF() async throws -> Data {
         let data = try await self.sendRequest(to: .exportVCF)
         return data
     }
@@ -900,7 +959,7 @@ final class ApiHandler: Sendable {
     /** Get contact network graph data
      - Returns: Graph object containing all nodes and edges of the graph
      */
-    func getNetworkGraph() async throws -> Graph {
+    public func getNetworkGraph() async throws -> Graph {
         let data = try await self.sendRequest(to: .graph)
         
         return try self.jsonDecoder.decode(Graph.self, from: data)
@@ -954,7 +1013,7 @@ final class ApiHandler: Sendable {
      
      - Returns: LoginResponse, if login was successful
      */
-    static func login(serverURL: URL, username: String, password: String) async throws -> LoginResponse {
+    public static func login(serverURL: URL, username: String, password: String) async throws -> LoginResponse {
         let credentials = [
             "identifier": username,
             "password": password
@@ -969,7 +1028,7 @@ final class ApiHandler: Sendable {
      Requires session cookie, call `.login()` first!
      - Returns: All API tokens for the current user
      */
-    static func getApiTokens(_ serverURL: URL) async throws -> PaginatedResponse<TokenResponse> {
+    public static func getApiTokens(_ serverURL: URL) async throws -> PaginatedResponse<TokenResponse> {
         let data = try await Self.sendRequest(serverURL: serverURL, endpoint: .apiTokens)
         
         let decoder = JSONDecoder()
@@ -986,7 +1045,7 @@ final class ApiHandler: Sendable {
      
      - Returns: TokenResponse containing the token
      */
-    static func createApiToken(serverURL: URL, name: String) async throws -> TokenResponse {
+    public static func createApiToken(serverURL: URL, name: String) async throws -> TokenResponse {
         let bodyDict = [
             "Name": name
         ]
@@ -1005,7 +1064,7 @@ final class ApiHandler: Sendable {
      - Parameter serverURL: URL of the server
      - Parameter id: ID of the API token to revoke
      */
-    static func revokeApiToken(serverURL: URL, id: Int) async throws {
+    public static func revokeApiToken(serverURL: URL, id: Int) async throws {
         _ = try await Self.sendRequest(serverURL: serverURL, endpoint: .apiToken(id: id), method: .DELETE)
     }
     
@@ -1018,7 +1077,7 @@ final class ApiHandler: Sendable {
      
      - Returns: List of users
      */
-    func getUsers(limit: Int = 50, page: Int = 1) async throws -> [User] {
+    public func getUsers(limit: Int = 50, page: Int = 1) async throws -> [User] {
         let data = try await self.sendRequest(to: .users, parameters: [URLQueryItem(limit: limit), URLQueryItem(page: page)])
         
         let response = try self.jsonDecoder.decode(PaginatedResponse<User>.self, from: data)
@@ -1029,7 +1088,7 @@ final class ApiHandler: Sendable {
      Get a user
      - Returns: User with the given id
      */
-    func getUser(_ id: Int) async throws -> User {
+    public func getUser(_ id: Int) async throws -> User {
         let data = try await self.sendRequest(to: .user(id: id))
         
         return try self.jsonDecoder.decode(User.self, from: data)
@@ -1041,7 +1100,7 @@ final class ApiHandler: Sendable {
      
      - Returns: The updated user
      */
-    func updateUser(_ user: User) async throws -> User {
+    public func updateUser(_ user: User) async throws -> User {
         let data = try await self.sendRequest(to: .user(id: user.id), method: .PATCH, body: self.jsonEncoder.encode(user))
         
         return try self.jsonDecoder.decode(User.self, from: data)
@@ -1051,7 +1110,7 @@ final class ApiHandler: Sendable {
      Delete a user
      - Parameter user: User to delete
      */
-    func deleteUser(_ user: User) async throws {
+    public func deleteUser(_ user: User) async throws {
         _ = try await self.sendRequest(to: .user(id: user.id), method: .DELETE)
     }
     
@@ -1061,7 +1120,7 @@ final class ApiHandler: Sendable {
      Health check
      - Returns: Health status for the server
      */
-    func checkHealth() async throws -> HealthStatus {
+    public func checkHealth() async throws -> HealthStatus {
         let data = try await self.sendRequest(to: .health)
         
         return try self.jsonDecoder.decode(HealthStatus.self, from: data)
@@ -1072,7 +1131,7 @@ final class ApiHandler: Sendable {
      - Parameter serverURL: URL of the server
      - Returns: Health status for the server
      */
-    static func checkHealth(_ serverURL: URL) async throws -> HealthStatus {
+    public static func checkHealth(_ serverURL: URL) async throws -> HealthStatus {
         let data = try await self.sendRequest(serverURL: serverURL, endpoint: .health)
         
         let decoder = JSONDecoder()

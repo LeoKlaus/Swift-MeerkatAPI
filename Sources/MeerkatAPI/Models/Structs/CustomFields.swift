@@ -22,4 +22,8 @@ public struct CustomFields: Codable {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.customFieldNames, forKey: .customFieldNames)
     }
+    
+    public init(customFieldNames: [String]) {
+        self.customFieldNames = customFieldNames
+    }
 }

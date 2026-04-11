@@ -59,16 +59,16 @@ public struct Reminder: Codable, Identifiable, Hashable {
     public let createdAt: Date
     public let updatedAt: Date?
     public let deletedAt: Date?
-    public let message: String
-    public let byMail: Bool
-    public let remindAt: Date
-    public let recurrence: ReminderRecurrence
-    public let reoccurFromCompletion: Bool
-    public let completed: Bool
-    public let emailSent: Bool
-    public let lastSent: Date?
-    public let contactId: Int?
-    public let contact: Contact?
+    public var message: String
+    public var byMail: Bool
+    public var remindAt: Date
+    public var recurrence: ReminderRecurrence
+    public var reoccurFromCompletion: Bool
+    public var completed: Bool
+    public var emailSent: Bool
+    public var lastSent: Date?
+    public var contactId: Int
+    public var contact: Contact?
     
     enum CodingKeys: String, CodingKey {
         case id = "ID"
@@ -87,6 +87,15 @@ public struct Reminder: Codable, Identifiable, Hashable {
         case contact = "contact"
     }
     
+    enum EncodingKeys: String, CodingKey {
+        case message = "message"
+        case byMail = "by_mail"
+        case remindAt = "remind_at"
+        case recurrence = "recurrence"
+        case reoccurFromCompletion = "reoccur_from_completion"
+        case contactId = "contact_id"
+    }
+    
     public init(
         id: Int,
         createdAt: Date,
@@ -100,7 +109,7 @@ public struct Reminder: Codable, Identifiable, Hashable {
         completed: Bool,
         emailSent: Bool,
         lastSent: Date? = nil,
-        contactId: Int? = nil,
+        contactId: Int,
         contact: Contact? = nil
     ) {
         self.id = id
@@ -117,5 +126,15 @@ public struct Reminder: Codable, Identifiable, Hashable {
         self.lastSent = lastSent
         self.contactId = contactId
         self.contact = contact
+    }
+    
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.message, forKey: .message)
+        try container.encode(self.byMail, forKey: .byMail)
+        try container.encode(self.remindAt, forKey: .remindAt)
+        try container.encode(self.recurrence, forKey: .recurrence)
+        try container.encode(self.reoccurFromCompletion, forKey: .reoccurFromCompletion)
+        try container.encode(self.contactId, forKey: .contactId)
     }
 }

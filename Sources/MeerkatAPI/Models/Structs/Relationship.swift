@@ -7,19 +7,19 @@
 
 import Foundation
 
-public struct Relationship: Codable, Equatable, Hashable, Identifiable {
+public struct Relationship: Codable, Equatable, Hashable, Identifiable, Sendable {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?
     public let deletedAt: Date?
-    public let name: String
-    public let type: String
-    public let gender: Gender?
-    public let birthday: String?
-    public let contactId: Int
-    public let relatedContactId: Int?
-    public let relatedContact: Contact?
-    public let sourceContact: Contact?
+    public var name: String
+    public var type: String
+    public var gender: Gender?
+    public var birthday: String?
+    public var contactId: Int
+    public var relatedContactId: Int?
+    public var relatedContact: Contact?
+    public var sourceContact: Contact?
     
     enum CodingKeys: String, CodingKey {
         case id = "ID"

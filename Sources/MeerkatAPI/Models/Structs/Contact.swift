@@ -7,28 +7,28 @@
 
 import Foundation
 
-public struct Contact: Codable, Identifiable, Hashable {
+public struct Contact: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let createdAt: Date?
     public let updatedAt: Date?
     public let deletedAt: Date?
-    public let firstname: String
-    public let lastname: String?
-    public let nickname: String?
-    public let gender: Gender?
-    public let email: String?
-    public let phone: String?
-    public let birthday: DateComponents?
+    public var firstname: String
+    public var lastname: String?
+    public var nickname: String?
+    public var gender: Gender?
+    public var email: String?
+    public var phone: String?
+    public var birthday: DateComponents?
     public let photo: String?
-    public let relationships: [Relationship]?
-    public let address: String?
-    public let howWeMet: String?
-    public let foodPreference: String?
-    public let workInformation: String?
-    public let contactInformation: String?
-    public let circles: [String]?
-    public let customFields: [String:String]?
-    public let archived: Bool
+    public var relationships: [Relationship]?
+    public var address: String?
+    public var howWeMet: String?
+    public var foodPreference: String?
+    public var workInformation: String?
+    public var contactInformation: String?
+    public var circles: [String]?
+    public var customFields: [String:String]?
+    public var archived: Bool
     public let photoThumbnail: String?
     
     public enum CodingKeys: String, CodingKey {
@@ -54,6 +54,24 @@ public struct Contact: Codable, Identifiable, Hashable {
         case customFields = "custom_fields"
         case archived
         case photoThumbnail = "photo_thumbnail"
+    }
+    
+    public enum EncodingKeys: String, CodingKey {
+        case firstname
+        case lastname
+        case nickname
+        case gender
+        case email
+        case phone
+        case birthday
+        case relationships
+        case address
+        case howWeMet = "how_we_met"
+        case foodPreference = "food_preference"
+        case workInformation = "work_information"
+        case contactInformation = "contact_information"
+        case circles
+        case customFields = "custom_fields"
     }
     
     public init(id: Int, createdAt: Date?, updatedAt: Date?, deletedAt: Date?, firstname: String, lastname: String?, nickname: String?, gender: Gender?, email: String?, phone: String?, birthday: DateComponents?, photo: String?, relationships: [Relationship]?, address: String?, howWeMet: String?, foodPreference: String?, workInformation: String?, contactInformation: String?, circles: [String]?, customFields: [String : String]?, archived: Bool, photoThumbnail: String?) {
@@ -112,6 +130,28 @@ public struct Contact: Codable, Identifiable, Hashable {
         self.photoThumbnail = try container.decodeIfPresent(String.self, forKey: .photoThumbnail)
     }
     
+    public func encode(to encoder: any Encoder) throws {
+        var container = try encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.firstname, forKey: .firstname)
+        try container.encodeIfPresent(self.lastname, forKey: .lastname)
+        try container.encodeIfPresent(self.nickname, forKey: .nickname)
+        try container.encodeIfPresent(self.gender, forKey: .gender)
+        try container.encodeIfPresent(self.email, forKey: .email)
+        try container.encodeIfPresent(self.phone, forKey: .phone)
+        
+        let birthdayString = self.birthday?.meerkatString
+        try container.encodeIfPresent(birthdayString, forKey: .birthday)
+        
+        try container.encodeIfPresent(self.relationships, forKey: .relationships)
+        try container.encodeIfPresent(self.address, forKey: .address)
+        try container.encodeIfPresent(self.howWeMet, forKey: .howWeMet)
+        try container.encodeIfPresent(self.foodPreference, forKey: .foodPreference)
+        try container.encodeIfPresent(self.workInformation, forKey: .workInformation)
+        try container.encodeIfPresent(self.contactInformation, forKey: .contactInformation)
+        try container.encodeIfPresent(self.circles, forKey: .circles)
+        try container.encodeIfPresent(self.customFields, forKey: .customFields)
+    }
+    
     public static let defaultFields: Set<Contact.CodingKeys> = [
         .id,
         .firstname,
@@ -135,7 +175,15 @@ public struct Contact: Codable, Identifiable, Hashable {
         .lastname
     ]
     
-    public var fullName: String {
+    public var firstAndLastName: String {
+        if let lastname, !lastname.isEmpty {
+            return firstname + " " + lastname
+        } else {
+            return firstname
+        }
+    }
+    
+    public var displayName: String {
         if let nickname, let lastname, !nickname.isEmpty && !lastname.isEmpty {
             return firstname + " \"\(nickname)\" " + lastname
         } else if let nickname, !nickname.isEmpty {

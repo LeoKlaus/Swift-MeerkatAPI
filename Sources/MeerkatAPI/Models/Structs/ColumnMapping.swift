@@ -8,8 +8,8 @@
 import Foundation
 
 public struct ColumnMapping: Codable {
-    public let csvColumn: String
-    public let contactField: String
+    public var csvColumn: String
+    public var contactField: String
     
     enum CodingKeys: String, CodingKey {
         case csvColumn = "csv_column"

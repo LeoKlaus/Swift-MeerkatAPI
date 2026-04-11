@@ -5,7 +5,7 @@
 //  Created by Leo Wehrfritz on 30.03.26.
 //
 
-public enum Gender: String, Codable {
+public enum Gender: String, Codable, Sendable {
     case male = "male"
     case female = "female"
     case other = "other"
