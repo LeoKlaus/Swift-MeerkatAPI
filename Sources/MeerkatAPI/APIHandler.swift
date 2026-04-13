@@ -465,7 +465,7 @@ public final class ApiHandler: Sendable {
     public func getCircles() async throws -> [String] {
         let data = try await self.sendRequest(to: .circles)
         
-        return try self.jsonDecoder.decode([String].self, from: data)
+        return try self.jsonDecoder.decode([String]?.self, from: data) ?? []
     }
     
     /**
@@ -786,9 +786,10 @@ public final class ApiHandler: Sendable {
     /**
      Mark a reminder complete (creates timeline entry)
      - Parameter reminder: Reminder to mark completed
+     - Parameter skip: Whether to skip the reminder
      */
-    public func completeReminder(_ reminder: Reminder) async throws {
-        _ = try await self.sendRequest(to: .completeReminder(id: reminder.id), method: .POST)
+    public func completeReminder(_ reminder: Reminder, skip: Bool = false) async throws {
+        _ = try await self.sendRequest(to: .completeReminder(id: reminder.id), method: .POST, parameters: skip ? [URLQueryItem(name: "skip", value: "true")] : [])
     }
     
     /**
