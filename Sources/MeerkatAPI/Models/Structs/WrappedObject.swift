@@ -32,7 +32,7 @@ public struct WrappedObject<T: Codable>: Decodable {
         var result: T?
         try dynamicKeysContainer.allKeys.forEach { key in
             switch key.stringValue {
-            case "contact", "relationship", "reminder":
+            case "contact", "relationship", "reminder", "note":
                 result = try dynamicKeysContainer.decode(T.self, forKey: key)
             default: break
             }

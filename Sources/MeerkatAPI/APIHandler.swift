@@ -589,13 +589,13 @@ public final class ApiHandler: Sendable {
     
     /**
      Create a note for a contact
-     - Parameter contact: Contact to create a note for
+     - Parameter contactId: ID of the contact to create a note for
      - Parameter note: Note to create
      
      - Returns: The newly created note
      */
-    public func createContactNote(contact: Contact, note: Note) async throws -> Note {
-        let data = try await self.sendRequest(to: .contactNotes(contactId: contact.id), method: .POST, body: self.jsonEncoder.encode(note))
+    public func createContactNote(contactId: Int, note: Note) async throws -> Note {
+        let data = try await self.sendRequest(to: .contactNotes(contactId: contactId), method: .POST, body: self.jsonEncoder.encode(note))
         
         let response = try self.jsonDecoder.decode(WrappedObject<Note>.self, from: data)
         return response.result
