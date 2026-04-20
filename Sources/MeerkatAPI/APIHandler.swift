@@ -496,6 +496,13 @@ public final class ApiHandler: Sendable {
         return try await self.sendRequest(to: .contactImage(id: contact.id))
     }
     
+    /** Get a contact’s profile picture
+     - Parameter contactId: The ID of contact whose profile should be loaded
+     */
+    public func getContactImage(_ id: Int) async throws -> Data {
+        return try await self.sendRequest(to: .contactImage(id: id))
+    }
+    
     /**
      Upload an image for a contact
      - Parameter contact: The contact this image sohuld be assigned to
