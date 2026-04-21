@@ -54,7 +54,7 @@ public struct ReminderCompletion: Codable, Identifiable, Hashable, TimelineEntry
     }
 }
 
-public struct Reminder: Codable, Identifiable, Hashable {
+public struct Reminder: Codable, Identifiable, Hashable, Sendable {
     public let id: Int
     public let createdAt: Date
     public let updatedAt: Date?

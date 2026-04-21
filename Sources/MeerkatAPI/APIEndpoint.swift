@@ -232,9 +232,9 @@ public enum ApiEndpoint {
         case .graph:
             return apiBasePath + "/graph"
         case .apiTokens:
-            return apiBasePath + "/admin/api-tokens"
+            return apiBasePath + "/api-tokens"
         case .apiToken(let id):
-            return apiBasePath + "/admin/api-tokens/\(id)"
+            return apiBasePath + "/api-tokens/\(id)"
         case .users:
             return apiBasePath + "/admin/users"
         case .user(let id):

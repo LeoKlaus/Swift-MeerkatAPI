@@ -5,7 +5,7 @@
 //  Created by Leo Wehrfritz on 31.03.26.
 //
 
-public enum ReminderRecurrence: String, Codable {
+public enum ReminderRecurrence: String, Codable, Sendable {
     case once
     case weekly
     case monthly
