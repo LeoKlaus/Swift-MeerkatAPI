@@ -131,7 +131,7 @@ public struct Contact: Codable, Identifiable, Hashable, Sendable {
     }
     
     public func encode(to encoder: any Encoder) throws {
-        var container = try encoder.container(keyedBy: EncodingKeys.self)
+        var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.firstname, forKey: .firstname)
         try container.encodeIfPresent(self.lastname, forKey: .lastname)
         try container.encodeIfPresent(self.nickname, forKey: .nickname)

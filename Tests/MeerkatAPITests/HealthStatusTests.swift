@@ -30,9 +30,9 @@ import Foundation
         
         let response = try decoder.decode(HealthStatus.self, from: jsonData)
         
-        #expect(response.status == "healthy")
+        #expect(response.status == .healthy)
         #expect(response.timestamp.timeIntervalSince1970 == 1774874780)
-        #expect(response.database.status == "healthy")
+        #expect(response.database.status == .healthy)
         #expect(response.database.responseTimeMs == 0)
         #expect(response.version == "0.1.0")
     }
